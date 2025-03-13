@@ -2,41 +2,6 @@ const User = require("../models/userModel");
 const { generateToken, hashPassword, comparePassword } = require("../utils/auth");
 const asyncHandler = require("express-async-handler");
 
-// @desc Register a new user
-// @route POST /api/users/register
-// const registerUser = async (req, res) => {
-//     try {
-//         const { name, email, password, weight, height, goal } = req.body;
-
-//         if (!name || !email || !password || !goal) {
-//             return res.status(400).json({ message: "All fields are required" });
-//         }
-
-//         const existingUser = await User.findOne({ email });
-//         if (existingUser) {
-//             return res.status(400).json({ message: "User already exists" });
-//         }
-
-//         const hashedPassword = await hashPassword(password);
-//         const newUser = await User.create({
-//             name,
-//             email,
-//             password: hashedPassword,
-//             weight,
-//             height,
-//             goal,
-//         });
-
-//         res.status(201).json({
-//             _id: newUser._id,
-//             name: newUser.name,
-//             email: newUser.email,
-//             token: generateToken(newUser._id),
-//         });
-//     } catch (error) {
-//         res.status(500).json({ message: "Server error" });
-//     }
-// };
 
 const register = asyncHandler(async (req, res) => {
   const { name, email, password, weight, height, goal, activityLevel, dietPreference, fitnessExperience } = req.body;
@@ -47,10 +12,11 @@ const register = asyncHandler(async (req, res) => {
       throw new Error("User already exists");
   }
 
+  const hashedPassword = await hashPassword(password);
   const user = await User.create({
       name,
       email,
-      password,
+      password: hashedPassword,  // ✅ Store hashed password
       weight,
       height,
       goal,
@@ -58,6 +24,7 @@ const register = asyncHandler(async (req, res) => {
       dietPreference,
       fitnessExperience
   });
+  
 
   if (user) {
       res.status(201).json({
@@ -84,9 +51,18 @@ const register = asyncHandler(async (req, res) => {
 const loginUser = async (req, res) => {
     try {
         const { email, password } = req.body;
+        console.log("Login attempt:", email, password);  // Debugging
 
         const user = await User.findOne({ email });
-        if (!user || !(await comparePassword(password, user.password))) {
+        if (!user) {
+            console.log("User not found");  // Debugging
+            return res.status(401).json({ message: "Invalid email or password" });
+        }
+
+        const isMatch = await comparePassword(password, user.password);
+        console.log("Password match:", isMatch);  // Debugging
+
+        if (!isMatch) {
             return res.status(401).json({ message: "Invalid email or password" });
         }
 
@@ -97,6 +73,7 @@ const loginUser = async (req, res) => {
             token: generateToken(user._id),
         });
     } catch (error) {
+        console.error("Login error:", error);
         res.status(500).json({ message: "Server error" });
     }
 };

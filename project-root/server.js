@@ -3,6 +3,9 @@ const dotenv = require("dotenv");
 const cors = require("cors");
 const connectDB = require("./config/db");
 const userRoutes = require("./routes/userRoutes");
+const workoutRoutes = require("./routes/workoutRoutes");
+const exerciseRoutes = require("./routes/exerciseRoutes");
+const nutritionRoutes = require("./routes/nutritionRoutes");
 
 dotenv.config();
 connectDB();
@@ -12,6 +15,9 @@ app.use(cors());
 app.use(express.json());
 
 app.use("/api/users", userRoutes);
+app.use("/api/exercises", exerciseRoutes);
+app.use("/api/workouts", workoutRoutes);
+app.use("/api/nutrition", nutritionRoutes);
 
 app.get("/", (req, res) => {
     res.send("API is running...");

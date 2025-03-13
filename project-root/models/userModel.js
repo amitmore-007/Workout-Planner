@@ -12,21 +12,27 @@ const userSchema = new mongoose.Schema(
       enum: ["weight loss", "weight gain", "maintenance"],
       required: true,
     },
-    activityLevel: {
-      type: String,
-      enum: ["sedentary", "lightly active", "moderately active", "very active"],
-      required: true,
-    },
-    dietPreference: {
-      type: String,
-      enum: ["veg", "non-veg", "vegan", "keto"],
-      required: true,
-    },
-    fitnessExperience: {
-      type: String,
-      enum: ["beginner", "intermediate", "advanced"],
-      required: true,
-    },
+   activityLevel: {
+  type: String,
+  enum: ["sedentary", "lightly active", "moderately active", "very active"],
+  required: true,
+  lowercase: true, // This automatically converts input to lowercase
+},
+
+dietPreference: {
+  type: String,
+  enum: ["veg", "non-veg", "vegan", "keto"],
+  required: true,
+  lowercase: true,
+},
+
+fitnessExperience: {
+  type: String,
+  enum: ["beginner", "intermediate", "advanced"],
+  required: true,
+  lowercase: true,
+},
+
   },
   { timestamps: true }
 );
