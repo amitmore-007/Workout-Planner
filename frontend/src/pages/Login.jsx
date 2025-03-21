@@ -75,7 +75,7 @@ const Login = () => {
       // Store token in local storage
       localStorage.setItem("userInfo", JSON.stringify(data));
       
-      // Redirect user
+      // Redirect user to dashboard
       navigate("/dashboard");
     } catch (err) {
       setError(err.message);
