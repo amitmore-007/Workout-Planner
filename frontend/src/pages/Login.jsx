@@ -14,13 +14,41 @@ const Login = () => {
   const { email, password } = formData;
   
   useEffect(() => {
-    // Trigger animation completion after a delay
-    const timer = setTimeout(() => {
-      setAnimationComplete(true);
+    // Trigger entrance animation
+    setAnimationComplete(true);
+    
+    // Create particle animation
+    const interval = setInterval(() => {
+      createParticle();
     }, 1500);
     
-    return () => clearTimeout(timer);
+    return () => clearInterval(interval);
   }, []);
+  
+  // Function to create animated fitness particles
+  const createParticle = () => {
+    const particles = document.getElementById('particles');
+    if (!particles) return;
+    
+    const particle = document.createElement('div');
+    const size = Math.random() * 10 + 5;
+    const xPos = Math.random() * window.innerWidth;
+    const yPos = Math.random() * window.innerHeight;
+    
+    particle.className = 'absolute rounded-full bg-gradient-to-r from-red-500 to-orange-500 opacity-70';
+    particle.style.width = `${size}px`;
+    particle.style.height = `${size}px`;
+    particle.style.left = `${xPos}px`;
+    particle.style.top = `${yPos}px`;
+    particle.style.animation = `float 8s linear forwards`;
+    
+    particles.appendChild(particle);
+    
+    // Remove particle after animation completes
+    setTimeout(() => {
+      particles.removeChild(particle);
+    }, 8000);
+  };
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -57,104 +85,105 @@ const Login = () => {
   };
 
   return (
-    <div className="relative min-h-screen flex items-center justify-center overflow-hidden bg-black">
-      {/* Background video */}
-      <div className="absolute inset-0 z-0 opacity-40">
-        <img 
-          src="/api/placeholder/1920/1080" 
-          alt="Gym workout" 
-          className="object-cover w-full h-full" 
-        />
-        <div className="absolute inset-0 bg-gradient-to-r from-black via-gray-900 to-black"></div>
-      </div>
+    <div className="min-h-screen flex items-center justify-center bg-cover bg-center relative overflow-hidden"
+         style={{ backgroundImage: "url(https://images.unsplash.com/photo-1517836357463-d25dfeac3438?ixlib=rb-1.2.1&auto=format&fit=crop&w=870&q=80)" }}>
       
-      {/* Animated particles for "sweat drops" effect */}
-      <div className="absolute inset-0 z-0">
-        {[...Array(20)].map((_, i) => (
-          <div 
-            key={i}
-            className={`absolute w-2 h-2 rounded-full bg-green-400 opacity-70 animate-pulse`}
-            style={{
-              left: `${Math.random() * 100}%`,
-              top: `${Math.random() * 100}%`,
-              animationDelay: `${Math.random() * 2}s`,
-              animationDuration: `${3 + Math.random() * 3}s`
-            }}
-          ></div>
-        ))}
-      </div>
+      {/* Overlay with gradient */}
+      <div className="absolute inset-0 bg-gradient-to-br from-black/70 via-black/60 to-rose-900/30 z-0"></div>
+      
+      {/* Animated particles container */}
+      <div id="particles" className="absolute inset-0 z-10 overflow-hidden"></div>
+      
+      {/* Animated glowing orbs */}
+      <div className="absolute w-52 h-52 bg-red-500 rounded-full filter blur-3xl opacity-20 -top-20 -left-20 animate-pulse"></div>
+      <div className="absolute w-64 h-64 bg-orange-500 rounded-full filter blur-3xl opacity-10 top-1/2 -right-20 animate-pulse" 
+           style={{animationDelay: "1s", animationDuration: "4s"}}></div>
+      <div className="absolute w-40 h-40 bg-yellow-500 rounded-full filter blur-3xl opacity-10 bottom-0 left-1/3 animate-pulse"
+           style={{animationDelay: "2s", animationDuration: "5s"}}></div>
       
       {/* Main content */}
-      <div className={`relative z-10 w-full max-w-md transform transition-all duration-1000 ${animationComplete ? 'translate-y-0 opacity-100' : 'translate-y-8 opacity-0'}`}>
-        <div className="backdrop-blur-lg bg-gray-900 bg-opacity-70 p-8 rounded-2xl shadow-2xl border border-gray-800">
-          {/* Logo and header */}
-          <div className="mb-8 text-center">
-            <div className="flex justify-center mb-4">
-              <div className="w-16 h-16 rounded-full bg-gradient-to-r from-green-400 to-blue-500 flex items-center justify-center shadow-lg transform hover:scale-105 transition-transform duration-300">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" className="w-10 h-10 text-white">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
-                </svg>
-              </div>
+      <div className={`relative z-20 w-96 transform transition-all duration-1000 ease-out ${
+        animationComplete ? 'translate-y-0 opacity-100' : 'translate-y-10 opacity-0'
+      }`}>
+        <div className="backdrop-blur-xl bg-white/10 p-8 rounded-3xl shadow-2xl border border-white/20 overflow-hidden">
+          {/* Animated flame logo */}
+          <div className="flex justify-center mb-6">
+            <div className="w-20 h-20 rounded-full bg-gradient-to-br from-red-500 via-orange-500 to-yellow-400 flex items-center justify-center shadow-lg transform hover:scale-105 transition-transform duration-300 group relative overflow-hidden">
+              <div className="absolute inset-0 bg-gradient-to-t from-red-600 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" className="w-10 h-10 text-white relative z-10">
+                <path fill="currentColor" d="M13.5,1c0,0,2.5,2.5,2.5,6c0,2.3-1.9,4.2-4.2,4.2c-2.3,0-4.2-1.9-4.2-4.2c0-0.7,0.2-1.3,0.5-1.8C6,7.8,5,11.1,5,14c0,4.4,3.6,8,8,8s8-3.6,8-8C21,7.1,17.4,2,13.5,1z"/>
+              </svg>
+              <div className="absolute inset-0 bg-gradient-to-b from-yellow-300 to-transparent opacity-30 animate-pulse"></div>
             </div>
-            <h2 className="text-3xl font-extrabold bg-gradient-to-r from-green-400 to-blue-500 bg-clip-text text-transparent">
-              POWER<span className="text-white">UP</span>
-            </h2>
-            <p className="text-gray-400 mt-2">Your fitness journey continues here</p>
           </div>
+          
+          {/* Heading with gradient text */}
+          <h2 className="text-3xl font-bold text-center bg-gradient-to-r from-red-400 via-orange-300 to-yellow-200 bg-clip-text text-transparent mb-1">
+            FITNESS CHAMP
+          </h2>
+          <p className="text-white/70 text-center mb-8">Unlock your potential</p>
           
           {/* Error display */}
           {error && (
-            <div className="mb-4 p-3 bg-red-500 bg-opacity-20 border border-red-500 rounded-lg text-red-500 text-center animate-pulse">
+            <div className="mb-6 p-3 bg-red-900/30 backdrop-blur-sm border border-red-500/50 rounded-xl text-red-300 text-center animate-pulse">
               {error}
             </div>
           )}
           
-          {/* Login form */}
-          <form onSubmit={handleSubmit} className="space-y-5">
-            <div className="group relative">
-              <input
-                type="email"
-                name="email"
-                value={email}
-                onChange={handleChange}
-                required
-                className="w-full p-4 pl-12 bg-gray-800 bg-opacity-80 rounded-lg border border-gray-700 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-green-400 focus:border-transparent transition-all duration-300"
-                placeholder="Email"
-              />
-              <div className="absolute left-3 top-4 text-gray-400">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                </svg>
+          {/* Login form with animated focus effects */}
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <div className="relative group">
+              <div className="absolute -inset-0.5 bg-gradient-to-r from-red-500 to-orange-500 rounded-lg blur opacity-0 group-hover:opacity-50 transition duration-1000 group-hover:duration-200"></div>
+              <div className="relative">
+                <input 
+                  type="email" 
+                  name="email"
+                  value={email}
+                  onChange={handleChange}
+                  required
+                  className="w-full bg-white/5 border border-white/10 rounded-lg pl-10 pr-4 py-3 text-white backdrop-blur-sm placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-orange-500/50 focus:border-transparent transition-all duration-300"
+                  placeholder="Your Email"
+                />
+                <div className="absolute left-3 top-3.5 text-orange-300">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                    <path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z" />
+                    <path d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z" />
+                  </svg>
+                </div>
               </div>
             </div>
             
-            <div className="group relative">
-              <input
-                type="password"
-                name="password"
-                value={password}
-                onChange={handleChange}
-                required
-                className="w-full p-4 pl-12 bg-gray-800 bg-opacity-80 rounded-lg border border-gray-700 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-green-400 focus:border-transparent transition-all duration-300"
-                placeholder="Password"
-              />
-              <div className="absolute left-3 top-4 text-gray-400">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                </svg>
+            <div className="relative group">
+              <div className="absolute -inset-0.5 bg-gradient-to-r from-red-500 to-orange-500 rounded-lg blur opacity-0 group-hover:opacity-50 transition duration-1000 group-hover:duration-200"></div>
+              <div className="relative">
+                <input 
+                  type="password" 
+                  name="password"
+                  value={password}
+                  onChange={handleChange}
+                  required
+                  className="w-full bg-white/5 border border-white/10 rounded-lg pl-10 pr-4 py-3 text-white backdrop-blur-sm placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-orange-500/50 focus:border-transparent transition-all duration-300"
+                  placeholder="Your Password"
+                />
+                <div className="absolute left-3 top-3.5 text-orange-300">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                    <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
+                  </svg>
+                </div>
               </div>
             </div>
             
-            <div className="pt-2">
+            <div>
               <button
-                type="submit"
+                type="submit" 
                 disabled={isLoading}
-                className={`w-full p-4 rounded-lg font-bold text-white shadow-lg transform hover:translate-y-1 transition-all duration-300 ${
+                className={`relative w-full py-3 rounded-xl font-bold text-white shadow-lg overflow-hidden group ${
                   isLoading 
                     ? 'bg-gray-600 cursor-not-allowed' 
-                    : 'bg-gradient-to-r from-green-500 to-blue-600 hover:from-green-600 hover:to-blue-700'
+                    : 'bg-gradient-to-r from-red-500 to-orange-500 hover:from-red-600 hover:to-orange-600'
                 }`}
               >
+                <span className="absolute w-64 h-32 mt-12 group-hover:mt-0 duration-700 ease-in-out transition-all -translate-x-20 rotate-45 bg-white opacity-10"></span>
                 {isLoading ? (
                   <span className="flex items-center justify-center">
                     <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
@@ -164,42 +193,77 @@ const Login = () => {
                     Loading...
                   </span>
                 ) : (
-                  "START YOUR WORKOUT"
+                  "POWER UP YOUR SESSION"
                 )}
               </button>
             </div>
           </form>
           
           {/* Registration link */}
-          <div className="mt-6 text-center text-gray-400">
+          <div className="mt-6 text-center text-white/80">
             <p>
               New to our gym?{" "}
-              <a href="/register" className="text-green-400 hover:text-green-300 font-medium transition-colors duration-300">
-                Sign Up Now
+              <a href="/register" className="text-orange-400 hover:text-orange-300 font-medium transition-colors duration-300 relative inline-block group">
+                <span>Sign Up Now</span>
+                <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-orange-400 group-hover:w-full transition-all duration-300"></span>
               </a>
             </p>
           </div>
           
-          {/* Motivational quote */}
-          <div className="mt-8 p-4 border-t border-gray-800">
-            <p className="text-center text-gray-500 italic text-sm">
-              "The only bad workout is the one that didn't happen."
+          {/* Animated motivational quote */}
+          <div className="mt-8 pt-6 border-t border-white/10">
+            <p className="text-center text-white/40 italic text-sm relative overflow-hidden">
+              <span className="inline-block animate-marquee whitespace-nowrap">
+                "The only bad workout is the one that didn't happen. Today is your day to make it count."
+              </span>
             </p>
           </div>
         </div>
+        
+        {/* Footer links with hover effect */}
+        <div className="mt-4 text-center">
+          <a href="#" className="text-white/50 mx-3 text-sm hover:text-white transition-colors duration-300 relative inline-block group">
+            <span>Terms</span>
+            <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-white/50 group-hover:w-full transition-all duration-300"></span>
+          </a>
+          <a href="#" className="text-white/50 mx-3 text-sm hover:text-white transition-colors duration-300 relative inline-block group">
+            <span>Privacy</span>
+            <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-white/50 group-hover:w-full transition-all duration-300"></span>
+          </a>
+          <a href="#" className="text-white/50 mx-3 text-sm hover:text-white transition-colors duration-300 relative inline-block group">
+            <span>Help</span>
+            <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-white/50 group-hover:w-full transition-all duration-300"></span>
+          </a>
+        </div>
       </div>
       
-      {/* Decorative dumbbells */}
-      <div className="absolute bottom-4 left-4 text-gray-700 opacity-30">
-        <svg xmlns="http://www.w3.org/2000/svg" className="h-16 w-16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
-        </svg>
-      </div>
-      <div className="absolute top-4 right-4 text-gray-700 opacity-30 transform rotate-45">
-        <svg xmlns="http://www.w3.org/2000/svg" className="h-16 w-16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
-        </svg>
-      </div>
+      {/* Add the keyframes animation for floating particles */}
+      <style jsx>{`
+        @keyframes float {
+          0% {
+            transform: translateY(0) rotate(0deg);
+            opacity: 0;
+          }
+          20% {
+            opacity: 0.5;
+          }
+          100% {
+            transform: translateY(-100vh) rotate(720deg);
+            opacity: 0;
+          }
+        }
+        @keyframes marquee {
+          0% {
+            transform: translateX(100%);
+          }
+          100% {
+            transform: translateX(-100%);
+          }
+        }
+        .animate-marquee {
+          animation: marquee 20s linear infinite;
+        }
+      `}</style>
     </div>
   );
 };
