@@ -1,15 +1,9 @@
-import PropTypes from "prop-types";
-import { Navigate } from "react-router-dom";
+import { Navigate, Outlet } from "react-router-dom";
 
-const ProtectedRoute = ({ children }) => {
-  const user = JSON.parse(localStorage.getItem("user"));
+const ProtectedRoute = () => {
+  const isAuthenticated = localStorage.getItem("userInfo"); // Check if user is authenticated
 
-  return user ? children : <Navigate to="/" />;
-};
-
-// Define prop types
-ProtectedRoute.propTypes = {
-  children: PropTypes.node.isRequired,
+  return isAuthenticated ? <Outlet /> : <Navigate to="/login" />;
 };
 
 export default ProtectedRoute;
