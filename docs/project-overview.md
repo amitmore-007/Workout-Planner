@@ -1,0 +1,3 @@
+Project Name: FitSync - AI-Powered Fitness & Nutrition Platform
+
+Description: FitSync is a cutting-edge AI-powered fitness platform designed to help users achieve their health goals through personalized workout plans, diet recommendations, real-time collaboration, and AI-powered analysis. Users can track their fitness journey, scan food items for nutrition breakdowns, and join live workout sessions with friends.
