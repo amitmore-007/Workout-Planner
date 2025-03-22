@@ -58,23 +58,26 @@ const Login = () => {
     e.preventDefault();
     setError("");
     setIsLoading(true);
-    
+  
     try {
       const response = await fetch("http://localhost:5000/api/users/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password }),
       });
-      
+  
       const data = await response.json();
-      
+  
       if (!response.ok) {
         throw new Error(data.message || "Login failed");
       }
-      
-      // Store token in local storage
-      localStorage.setItem("userInfo", JSON.stringify(data));
-      
+  
+      // ✅ Store token correctly
+      localStorage.setItem("token", data.token); // Store only the token
+      localStorage.setItem("userInfo", JSON.stringify(data)); // Store user info separately
+  
+      console.log("Token Stored:", data.token); // Debugging
+  
       // Redirect user to dashboard
       navigate("/dashboard");
     } catch (err) {
@@ -83,6 +86,7 @@ const Login = () => {
       setIsLoading(false);
     }
   };
+  
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-cover bg-center relative overflow-hidden"
