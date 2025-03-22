@@ -543,7 +543,9 @@ const Dashboard = () => {
   useEffect(() => {
     const fetchUserData = async () => {
       try {
-        const token = localStorage.getItem("token");
+        // ✅ Correctly retrieve token from localStorage
+        const userInfo = JSON.parse(localStorage.getItem("userInfo"));
+        const token = userInfo?.token;  // ✅ Fetch token correctly
     
         if (!token) {
           console.error("No token found! Redirecting to login...");
@@ -553,10 +555,10 @@ const Dashboard = () => {
     
         console.log("Token Sent:", token); // Debugging
     
-        const response = await axios.get("/api/users/profile", {
+        const response = await axios.get("http://localhost:5000/api/users/profile", {
           headers: { Authorization: `Bearer ${token}` },
         });
-    
+        
         console.log("Fetched User Data:", response.data); // Debugging
         setUser(response.data);
       } catch (error) {
@@ -566,6 +568,7 @@ const Dashboard = () => {
         setLoading(false);
       }
     };
+    
     
     
     
