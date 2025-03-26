@@ -1,9 +1,9 @@
 const express = require("express");
+const { getDietPlan } = require("../controllers/dietController");
 const { protect } = require("../middlewares/authMiddleware");
-const { getWorkoutPlan } = require("../controllers/exerciseController");
 
 const router = express.Router();
 
-router.get("/workout-plan", protect, getWorkoutPlan);
+router.get("/diet-plan", protect, getDietPlan); // ✅ Secure Route
 
 module.exports = router;
