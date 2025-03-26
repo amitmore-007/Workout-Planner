@@ -7,6 +7,9 @@ const workoutRoutes = require("./routes/workoutRoutes");
 const exerciseRoutes = require("./routes/exerciseRoutes");
 const nutritionRoutes = require("./routes/nutritionRoutes");
 
+
+
+
 dotenv.config();
 connectDB();
 const app = express();
@@ -18,6 +21,9 @@ app.use("/api/users", userRoutes);
 app.use("/api/exercises", exerciseRoutes);
 app.use("/api/workouts", workoutRoutes);
 app.use("/api/nutrition", nutritionRoutes);
+app.use("/api/diet", require("./routes/dietRoutes"));
+
+
 
 app.get("/", (req, res) => {
     res.send("API is running...");
