@@ -9,7 +9,7 @@ const userSchema = new mongoose.Schema(
     height: { type: Number, required: true },
     goal: {
       type: String,
-      enum: ["weight loss", "weight gain", "maintenance"],
+      enum: ["weight loss", "weight gain", "balanced"],
       required: true,
     },
    activityLevel: {

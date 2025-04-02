@@ -1,7 +1,7 @@
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import Layout from "./components/Layout";
 import Dashboard from "./pages/Dashboard";
-import WorkoutPlan from "./pages/WorkoutPlan";
+import WorkoutDashboard from "./pages/WorkoutPlan";
 import DietPlan from "./pages/DietPlan";
 import FoodScanner from "./pages/FoodScanner";
 import VideoMeet from "./pages/VideoMeet";
@@ -23,7 +23,7 @@ const App = () => {
         {/* Protected Routes (With Sidebar) */}
         <Route path="/" element={<Layout />}>
           <Route path="dashboard" element={<Dashboard />} />
-          <Route path="workouts" element={<WorkoutPlan />} />
+          <Route path="workouts" element={<WorkoutDashboard />} />
           <Route path="diet" element={<DietPlan />} />
           <Route path="scanner" element={<FoodScanner />} />
           <Route path="video-meet" element={<VideoMeet />} />
