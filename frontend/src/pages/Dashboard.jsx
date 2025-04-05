@@ -531,21 +531,49 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
-import Sidebar from "../components/Sidebar"; 
+import Sidebar from "../components/Sidebar";
 import { Activity, User, Ruler, Weight, HeartPulse, Dumbbell, Utensils, Menu } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import CountUp from "react-countup";
+import { CircularProgressbar, buildStyles } from "react-circular-progressbar";
+import "react-circular-progressbar/dist/styles.css";
+import { Chart as ChartJS, ArcElement, Tooltip, Legend } from "chart.js";
+import { Doughnut } from "react-chartjs-2";
+import confetti from "canvas-confetti";
+import { useSpring, animated } from "@react-spring/web";
+
+// Register Chart.js components
+ChartJS.register(ArcElement, Tooltip, Legend);
 
 const Dashboard = () => {
   const navigate = useNavigate();
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [showWelcome, setShowWelcome] = useState(false);
+  const [selectedCard, setSelectedCard] = useState(null);
+
+  // Animation for the welcome message
+  const fadeIn = useSpring({
+    opacity: showWelcome ? 1 : 0,
+    transform: showWelcome ? "translateY(0)" : "translateY(-50px)",
+    config: { tension: 280, friction: 60 },
+  });
+
+  // Animation for the card hover
+  const getCardAnimation = (index) => useSpring({
+    scale: selectedCard === index ? 1.05 : 1,
+    boxShadow: selectedCard === index 
+      ? "0 20px 25px -5px rgba(0, 0, 0, 0.2), 0 10px 10px -5px rgba(0, 0, 0, 0.1)" 
+      : "0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)",
+    config: { tension: 300, friction: 40 },
+  });
 
   useEffect(() => {
     const fetchUserData = async () => {
       try {
-        // ✅ Correctly retrieve token from localStorage
         const userInfo = JSON.parse(localStorage.getItem("userInfo"));
-        const token = userInfo?.token;  // ✅ Fetch token correctly
+        const token = userInfo?.token;
     
         if (!token) {
           console.error("No token found! Redirecting to login...");
@@ -553,14 +581,24 @@ const Dashboard = () => {
           return;
         }
     
-        console.log("Token Sent:", token); // Debugging
-    
         const response = await axios.get("http://localhost:5000/api/users/profile", {
           headers: { Authorization: `Bearer ${token}` },
         });
         
-        console.log("Fetched User Data:", response.data); // Debugging
         setUser(response.data);
+        
+        // Trigger welcome animation after data loads
+        setTimeout(() => {
+          setShowWelcome(true);
+          
+          // Launch confetti effect on successful login
+          confetti({
+            particleCount: 100,
+            spread: 70,
+            origin: { y: 0.6 }
+          });
+        }, 300);
+        
       } catch (error) {
         console.error("Failed to fetch user data:", error);
         navigate("/login");
@@ -569,61 +607,332 @@ const Dashboard = () => {
       }
     };
     
-    
-    
-    
     fetchUserData();
   }, [navigate]);
 
+  // Mock data for goal progress chart
+  const goalProgressData = {
+    labels: ['Progress', 'Remaining'],
+    datasets: [
+      {
+        data: [65, 35],
+        backgroundColor: ['#10B981', '#1F2937'],
+        borderWidth: 0,
+      },
+    ],
+  };
+
+  // Mock data for workout consistency
+  const workoutData = {
+    labels: ['Completed', 'Missed'],
+    datasets: [
+      {
+        data: [80, 20],
+        backgroundColor: ['#8B5CF6', '#1F2937'],
+        borderWidth: 0,
+      },
+    ],
+  };
+
+  const chartOptions = {
+    cutout: '75%',
+    plugins: {
+      legend: {
+        display: false,
+      },
+      tooltip: {
+        enabled: true,
+      },
+    },
+    responsive: true,
+    maintainAspectRatio: false,
+  };
+
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-gray-900">
-        <Activity className="text-green-400 w-12 h-12 animate-spin" />
-        <p className="ml-3 text-white text-lg">Loading dashboard...</p>
+      <div className="flex flex-col items-center justify-center min-h-screen bg-gray-900">
+        <motion.div
+          animate={{ rotate: 360 }}
+          transition={{ duration: 1.5, repeat: Infinity, ease: "linear" }}
+        >
+          <Activity className="text-green-400 w-16 h-16" />
+        </motion.div>
+        <motion.p 
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.3 }}
+          className="mt-4 text-white text-xl font-medium"
+        >
+          Preparing your fitness dashboard...
+        </motion.p>
       </div>
     );
   }
 
   return (
-    <div className="flex bg-gray-900 min-h-screen">
+    <div className="flex bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 min-h-screen">
       {/* Sidebar */}
-      <Sidebar isOpen={sidebarOpen} toggleSidebar={() => setSidebarOpen(!sidebarOpen)} />
+      <AnimatePresence>
+        {sidebarOpen && (
+          <motion.div
+            initial={{ x: -300 }}
+            animate={{ x: 0 }}
+            exit={{ x: -300 }}
+            transition={{ type: "spring", stiffness: 400, damping: 40 }}
+          >
+            <Sidebar isOpen={sidebarOpen} toggleSidebar={() => setSidebarOpen(!sidebarOpen)} />
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Main Content */}
-      <div className={`flex-grow p-6 transition-all ${sidebarOpen ? "ml-10" : "ml-15"}`}>
-        {/* Toggle Sidebar Button */}
-        <button 
+      <div className={`flex-grow p-6 transition-all duration-300 ${sidebarOpen ? "ml-10" : "ml-4"}`}>
+        {/* Toggle Sidebar Button with animation */}
+        <motion.button 
+          whileHover={{ scale: 1.1 }}
+          whileTap={{ scale: 0.9 }}
           onClick={() => setSidebarOpen(!sidebarOpen)}
-          className="bg-gray-800 text-white p-2 rounded-md shadow-md hover:bg-gray-700 transition-all fixed top-6 left-6"
+          className="bg-gray-800 text-white p-2 rounded-full shadow-lg hover:bg-gray-700 transition-all fixed top-6 left-6 z-20"
         >
           <Menu className="w-6 h-6" />
-        </button>
+        </motion.button>
 
-        {/* Welcome Header */}
-        <h2 className="text-3xl font-semibold mb-8 text-center text-white">
-          Welcome, {user?.name}!
-        </h2>
+        {/* Welcome Header with animation */}
+        <animated.div style={fadeIn} className="mb-12 mt-6">
+          <motion.h2 
+            className="text-4xl font-bold mb-2 text-center bg-clip-text text-transparent bg-gradient-to-r from-green-400 to-blue-500"
+          >
+            Welcome back, {user?.name}!
+          </motion.h2>
+          <p className="text-center text-gray-400">Let's crush your fitness goals today</p>
+        </animated.div>
 
-        {/* User Details Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 gap-6 mx-auto max-w-5xl">
-          {[
-            { title: "Weight", value: `${user?.weight} kg`, icon: <Weight className="text-blue-400 w-12 h-12" /> },
-            { title: "Height", value: `${user?.height} cm`, icon: <Ruler className="text-purple-400 w-12 h-12" /> },
-            { title: "Fitness Goal", value: user?.goal, icon: <HeartPulse className="text-red-400 w-12 h-12" /> },
-            { title: "Activity Level", value: user?.activityLevel, icon: <Dumbbell className="text-green-400 w-12 h-12" /> },
-            { title: "Diet Preference", value: user?.dietPreference, icon: <Utensils className="text-yellow-400 w-12 h-12" /> },
-            { title: "Experience", value: user?.fitnessExperience, icon: <User className="text-teal-400 w-12 h-12" /> },
-          ].map((card, index) => (
-            <div 
-              key={index} 
-              className="bg-gray-800 p-6 rounded-xl shadow-lg flex flex-col items-center space-y-3 
-                         hover:scale-105 transition-transform text-center w-full"
-            >
-              {card.icon}
-              <p className="text-gray-400">{card.title}</p>
-              <p className="text-xl font-bold capitalize text-white">{card.value}</p>
+        {/* Summary Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+          {/* Current Weight */}
+          <motion.div 
+            whileHover={{ y: -5 }}
+            className="bg-gradient-to-br from-blue-900 to-blue-700 p-6 rounded-xl shadow-xl"
+          >
+            <div className="flex justify-between items-center">
+              <div>
+                <p className="text-blue-200 text-sm font-medium">Current Weight</p>
+                <div className="flex items-baseline">
+                  <CountUp
+                    end={user?.weight || 0}
+                    duration={2}
+                    decimals={1}
+                    decimal="."
+                    suffix=" kg"
+                    className="text-3xl font-bold text-white"
+                  />
+                </div>
+              </div>
+              <div className="bg-blue-800 p-3 rounded-lg">
+                <Weight className="text-blue-200 w-8 h-8" />
+              </div>
             </div>
-          ))}
+          </motion.div>
+          
+          {/* Goal Progress */}
+          <motion.div 
+            whileHover={{ y: -5 }}
+            className="bg-gradient-to-br from-green-900 to-green-700 p-6 rounded-xl shadow-xl"
+          >
+            <div className="flex justify-between items-center">
+              <div>
+                <p className="text-green-200 text-sm font-medium">Goal Progress</p>
+                <CountUp
+                  end={65}
+                  duration={2}
+                  suffix="%"
+                  className="text-3xl font-bold text-white"
+                />
+              </div>
+              <div className="bg-green-800 p-3 rounded-lg">
+                <HeartPulse className="text-green-200 w-8 h-8" />
+              </div>
+            </div>
+          </motion.div>
+          
+          {/* Workout Consistency */}
+          <motion.div 
+            whileHover={{ y: -5 }}
+            className="bg-gradient-to-br from-purple-900 to-purple-700 p-6 rounded-xl shadow-xl"
+          >
+            <div className="flex justify-between items-center">
+              <div>
+                <p className="text-purple-200 text-sm font-medium">Workout Consistency</p>
+                <CountUp
+                  end={80}
+                  duration={2}
+                  suffix="%"
+                  className="text-3xl font-bold text-white"
+                />
+              </div>
+              <div className="bg-purple-800 p-3 rounded-lg">
+                <Dumbbell className="text-purple-200 w-8 h-8" />
+              </div>
+            </div>
+          </motion.div>
+        </div>
+
+        {/* Main Dashboard Sections */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mx-auto">
+          {/* Left Column - User Stats */}
+          <div className="lg:col-span-1">
+            <motion.div 
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2 }}
+              className="bg-gray-800 p-6 rounded-xl shadow-xl mb-6"
+            >
+              <h3 className="text-xl font-semibold text-white mb-4">Your Profile</h3>
+              
+              <div className="space-y-4">
+                {[
+                  { title: "Height", value: `${user?.height} cm`, icon: <Ruler className="text-purple-400 w-5 h-5" /> },
+                  { title: "Activity Level", value: user?.activityLevel, icon: <Activity className="text-green-400 w-5 h-5" /> },
+                  { title: "Diet Preference", value: user?.dietPreference, icon: <Utensils className="text-yellow-400 w-5 h-5" /> },
+                  { title: "Experience", value: user?.fitnessExperience, icon: <User className="text-teal-400 w-5 h-5" /> },
+                ].map((item, index) => (
+                  <motion.div 
+                    key={index}
+                    whileHover={{ x: 5 }}
+                    className="flex items-center p-3 bg-gray-700 bg-opacity-40 rounded-lg"
+                  >
+                    <div className="mr-3">{item.icon}</div>
+                    <div>
+                      <p className="text-gray-400 text-xs">{item.title}</p>
+                      <p className="text-white font-medium capitalize">{item.value}</p>
+                    </div>
+                  </motion.div>
+                ))}
+              </div>
+            </motion.div>
+            
+            {/* Goal Card */}
+            <motion.div 
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.4 }}
+              className="bg-gray-800 p-6 rounded-xl shadow-xl"
+            >
+              <h3 className="text-xl font-semibold text-white mb-4">Your Goal</h3>
+              <div className="bg-gradient-to-br from-blue-800 to-purple-800 p-4 rounded-lg text-center">
+                <div className="w-24 h-24 mx-auto mb-3">
+                  <CircularProgressbar 
+                    value={65} 
+                    text={`65%`}
+                    styles={buildStyles({
+                      textSize: '22px',
+                      pathColor: '#10B981',
+                      textColor: '#fff',
+                      trailColor: '#374151',
+                    })}
+                  />
+                </div>
+                <h4 className="text-lg font-bold text-white">{user?.goal}</h4>
+                <p className="text-gray-300 text-sm mt-1">Keep pushing! You're making great progress.</p>
+              </div>
+            </motion.div>
+          </div>
+          
+          {/* Center Column - Charts & Analytics */}
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3 }}
+            className="lg:col-span-2"
+          >
+            <div className="bg-gray-800 p-6 rounded-xl shadow-xl mb-6">
+              <h3 className="text-xl font-semibold text-white mb-6">Your Fitness Overview</h3>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* Goal Progress Chart */}
+                <div className="bg-gray-700 bg-opacity-40 p-4 rounded-lg">
+                  <h4 className="text-gray-300 text-sm mb-4">Goal Progress</h4>
+                  <div className="h-48 relative">
+                    <Doughnut data={goalProgressData} options={chartOptions} />
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <p className="text-3xl font-bold text-white">65%</p>
+                    </div>
+                  </div>
+                </div>
+                
+                {/* Workout Consistency Chart */}
+                <div className="bg-gray-700 bg-opacity-40 p-4 rounded-lg">
+                  <h4 className="text-gray-300 text-sm mb-4">Workout Consistency</h4>
+                  <div className="h-48 relative">
+                    <Doughnut data={workoutData} options={chartOptions} />
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <p className="text-3xl font-bold text-white">80%</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              {/* Quick Stats */}
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6">
+                {[
+                  { label: "Workouts This Week", value: "4/5", color: "text-blue-400" },
+                  { label: "Calories Burned", value: "3,240", color: "text-red-400" },
+                  { label: "Protein Goal", value: "85%", color: "text-green-400" },
+                  { label: "Water Intake", value: "70%", color: "text-cyan-400" },
+                ].map((stat, i) => (
+                  <motion.div 
+                    key={i}
+                    whileHover={{ scale: 1.05 }}
+                    className="bg-gray-700 bg-opacity-40 p-4 rounded-lg text-center"
+                  >
+                    <p className={`text-xl font-bold ${stat.color}`}>{stat.value}</p>
+                    <p className="text-gray-400 text-xs mt-1">{stat.label}</p>
+                  </motion.div>
+                ))}
+              </div>
+            </div>
+            
+            {/* Today's Plan */}
+            <motion.div 
+              whileHover={{ y: -5 }}
+              className="bg-gray-800 p-6 rounded-xl shadow-xl"
+            >
+              <div className="flex justify-between items-center mb-6">
+                <h3 className="text-xl font-semibold text-white">Today's Plan</h3>
+                <button className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-200">
+                  Start Workout
+                </button>
+              </div>
+              
+              <div className="space-y-4">
+                {[
+                  { time: "07:00 AM", title: "Morning Cardio", status: "Completed", icon: <HeartPulse className="text-green-400 w-5 h-5" /> },
+                  { time: "12:30 PM", title: "Protein-Rich Lunch", status: "Completed", icon: <Utensils className="text-green-400 w-5 h-5" /> },
+                  { time: "06:00 PM", title: "Strength Training", status: "Upcoming", icon: <Dumbbell className="text-blue-400 w-5 h-5" /> },
+                  { time: "08:30 PM", title: "Recovery Meal", status: "Upcoming", icon: <Utensils className="text-blue-400 w-5 h-5" /> },
+                ].map((item, index) => (
+                  <motion.div 
+                    key={index}
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: 0.1 * index }}
+                    className="flex items-center p-3 bg-gray-700 bg-opacity-40 rounded-lg"
+                  >
+                    <div className="mr-3">{item.icon}</div>
+                    <div className="flex-grow">
+                      <p className="text-white font-medium">{item.title}</p>
+                      <p className="text-gray-400 text-xs">{item.time}</p>
+                    </div>
+                    <span className={`text-xs font-medium px-2 py-1 rounded ${
+                      item.status === "Completed" ? "bg-green-900 text-green-300" : "bg-blue-900 text-blue-300"
+                    }`}>
+                      {item.status}
+                    </span>
+                  </motion.div>
+                ))}
+              </div>
+            </motion.div>
+          </motion.div>
         </div>
       </div>
     </div>
@@ -631,4 +940,3 @@ const Dashboard = () => {
 };
 
 export default Dashboard;
-
