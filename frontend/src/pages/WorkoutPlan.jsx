@@ -17,16 +17,63 @@ const WorkoutPlan = () => {
                 });
 
                 console.log("Fetched Workouts:", response.data.workouts);
-                setWorkouts(response.data.workouts.map(workout => ({ 
-                    ...workout, 
-                    time: 0, 
-                    isRunning: false, 
-                    liked: false, 
-                    completed: false,
-                    // Clean arrays from brackets
-                    Primary_Muscles: Array.isArray(workout.Primary_Muscles) ? workout.Primary_Muscles : [],
-                    Secondary_Muscles: Array.isArray(workout.Secondary_Muscles) ? workout.Secondary_Muscles : [],
-                })));
+                setWorkouts(response.data.workouts.map(workout => {
+                    // Clean and process the data
+                    const processedWorkout = { 
+                        ...workout, 
+                        time: 0, 
+                        isRunning: false, 
+                        liked: false, 
+                        completed: false
+                    };
+                    
+                    // Clean Primary_Muscles from brackets
+                    if (typeof workout.Primary_Muscles === 'string') {
+                        // Remove square brackets and split by commas
+                        processedWorkout.Primary_Muscles = workout.Primary_Muscles
+                            .replace(/^\[|\]$/g, '') // Remove [ and ]
+                            .split(',')
+                            .map(muscle => muscle.trim())
+                            .filter(muscle => muscle); // Remove empty items
+                    } else if (Array.isArray(workout.Primary_Muscles)) {
+                        processedWorkout.Primary_Muscles = workout.Primary_Muscles;
+                    } else {
+                        processedWorkout.Primary_Muscles = [];
+                    }
+                    
+                    // Clean Secondary_Muscles from brackets
+                    if (typeof workout.Secondary_Muscles === 'string') {
+                        // Remove square brackets and split by commas
+                        processedWorkout.Secondary_Muscles = workout.Secondary_Muscles
+                            .replace(/^\[|\]$/g, '') // Remove [ and ]
+                            .split(',')
+                            .map(muscle => muscle.trim())
+                            .filter(muscle => muscle); // Remove empty items
+                    } else if (Array.isArray(workout.Secondary_Muscles)) {
+                        processedWorkout.Secondary_Muscles = workout.Secondary_Muscles;
+                    } else {
+                        processedWorkout.Secondary_Muscles = [];
+                    }
+                    
+                    // Process Instructions: Convert paragraph into bullet points
+                    if (typeof workout.Instructions === 'string') {
+                        // Remove square brackets
+                        const cleanInstructions = workout.Instructions.replace(/^\[|\]$/g, '');
+                        
+                        // Split the paragraph into sentences
+                        processedWorkout.Instructions = cleanInstructions
+                            .split(/\.\s+/) // Split on period followed by whitespace
+                            .map(sentence => sentence.trim())
+                            .filter(sentence => sentence) // Remove empty sentences
+                            .map(sentence => sentence.endsWith('.') ? sentence : sentence + '.'); // Ensure each ends with a period
+                    } else if (Array.isArray(workout.Instructions)) {
+                        processedWorkout.Instructions = workout.Instructions;
+                    } else {
+                        processedWorkout.Instructions = [];
+                    }
+                    
+                    return processedWorkout;
+                }));
             } catch (error) {
                 console.error("Error fetching workouts:", error.response?.data || error.message);
             }
@@ -73,6 +120,16 @@ const WorkoutPlan = () => {
     const openInstructionsModal = (workout) => {
         setSelectedWorkout(workout);
         setShowModal(true);
+        // Make sure the navbar is visible by preventing body scroll while maintaining positioning
+        document.body.style.overflow = 'hidden';
+        document.body.style.paddingRight = '15px'; // Prevent layout shift
+    };
+    
+    const closeInstructionsModal = () => {
+        setShowModal(false);
+        // Restore normal scrolling
+        document.body.style.overflow = '';
+        document.body.style.paddingRight = '';
     };
 
     // Format seconds to minutes:seconds
@@ -115,6 +172,42 @@ const WorkoutPlan = () => {
     const completedVariants = {
         initial: { scale: 0.8, opacity: 0 },
         animate: { scale: 1, opacity: 1, transition: { duration: 0.5 } }
+    };
+    
+    // Like button animations
+    const likeVariants = {
+        liked: {
+            scale: [1, 1.3, 1],
+            transition: { duration: 0.5, ease: "easeInOut" }
+        },
+        unliked: {
+            scale: 1
+        }
+    };
+    
+    // Instruction bullet point animation variants
+    const bulletVariants = {
+        hidden: { opacity: 0, x: -20 },
+        visible: (custom) => ({
+            opacity: 1,
+            x: 0,
+            transition: { 
+                delay: custom * 0.15,
+                type: "spring",
+                stiffness: 100,
+                damping: 10
+            }
+        }),
+        hover: {
+            scale: 1.05,
+            x: 10,
+            color: "#60a5fa", // Blue highlight
+            transition: { 
+                type: "spring", 
+                stiffness: 300,
+                damping: 10
+            }
+        }
     };
 
     return (
@@ -284,16 +377,44 @@ const WorkoutPlan = () => {
                                         whileHover={{ scale: 1.05 }}
                                         whileTap={{ scale: 0.95 }}
                                         onClick={() => handleLike(workout._id)}
-                                        className={`flex items-center justify-center py-2 px-4 rounded-lg transition-all duration-300 ${
+                                        className={`relative overflow-hidden flex items-center justify-center py-2 px-4 rounded-lg transition-all duration-300 ${
                                             workout.liked 
-                                                ? 'bg-gradient-to-r from-red-600 to-pink-600 text-white' 
+                                                ? 'bg-gradient-to-r from-pink-500 to-rose-600 text-white' 
                                                 : 'bg-gray-700 hover:bg-gray-600 text-gray-200'
                                         }`}
                                     >
+                                        {/* Added particle effect when liked */}
+                                        {workout.liked && (
+                                            <motion.div 
+                                                initial={{ opacity: 1 }}
+                                                animate={{ opacity: 0 }}
+                                                className="absolute inset-0 flex items-center justify-center"
+                                            >
+                                                {[...Array(8)].map((_, i) => (
+                                                    <motion.div
+                                                        key={i}
+                                                        initial={{ 
+                                                            x: 0, 
+                                                            y: 0, 
+                                                            scale: 0 
+                                                        }}
+                                                        animate={{ 
+                                                            x: (Math.random() - 0.5) * 60, 
+                                                            y: (Math.random() - 0.5) * 60, 
+                                                            scale: Math.random() * 0.6 + 0.2,
+                                                            opacity: 0
+                                                        }}
+                                                        transition={{ duration: 0.8 }}
+                                                        className="absolute w-2 h-2 bg-pink-300 rounded-full"
+                                                    />
+                                                ))}
+                                            </motion.div>
+                                        )}
+                                        
                                         <motion.span 
-                                            animate={workout.liked ? { scale: [1, 1.2, 1] } : {}}
-                                            transition={{ duration: 0.3 }}
-                                            className="mr-2"
+                                            variants={likeVariants}
+                                            animate={workout.liked ? "liked" : "unliked"}
+                                            className="mr-2 text-lg relative"
                                         >
                                             {workout.liked ? '❤️' : '🤍'}
                                         </motion.span>
@@ -345,7 +466,7 @@ const WorkoutPlan = () => {
                 )}
             </div>
 
-            {/* Instructions Modal */}
+            {/* Enhanced Instructions Modal with Bullet Points */}
             <AnimatePresence>
                 {showModal && selectedWorkout && (
                     <motion.div 
@@ -358,8 +479,8 @@ const WorkoutPlan = () => {
                             initial={{ opacity: 0 }}
                             animate={{ opacity: 0.6 }}
                             exit={{ opacity: 0 }}
-                            className="absolute inset-0 bg-black"
-                            onClick={() => setShowModal(false)}
+                            className="absolute inset-0 bg-black backdrop-blur-sm"
+                            onClick={() => closeInstructionsModal()}
                         />
                         
                         <motion.div
@@ -367,77 +488,148 @@ const WorkoutPlan = () => {
                             animate={{ scale: 1, opacity: 1, y: 0 }}
                             exit={{ scale: 0.9, opacity: 0, y: 20 }}
                             transition={{ type: "spring", bounce: 0.3 }}
-                            className="relative bg-gradient-to-br from-gray-800 to-gray-900 rounded-xl max-w-2xl w-full mx-auto p-6 shadow-2xl border border-gray-700 overflow-hidden"
+                            className="relative bg-gradient-to-br from-gray-900 to-gray-800 rounded-xl max-w-2xl w-full mx-auto shadow-2xl border border-blue-900/30 overflow-hidden"
                         >
                             {/* Decorative elements */}
                             <div className="absolute top-0 right-0 w-64 h-64 bg-blue-600 rounded-full opacity-10 -mr-32 -mt-32 blur-3xl"></div>
                             <div className="absolute bottom-0 left-0 w-64 h-64 bg-purple-600 rounded-full opacity-10 -ml-32 -mb-32 blur-3xl"></div>
                             
-                            <div className="flex justify-between items-center mb-4">
-                                <h3 className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-500">
-                                    Exercise Instructions
-                                </h3>
-                                <motion.button
-                                    whileHover={{ scale: 1.1 }}
-                                    whileTap={{ scale: 0.9 }}
-                                    onClick={() => setShowModal(false)}
-                                    className="p-2 rounded-full bg-gray-700 hover:bg-gray-600"
-                                >
-                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
-                                    </svg>
-                                </motion.button>
-                            </div>
-
-                            <div className="bg-gray-900 bg-opacity-50 rounded-lg p-4 mb-4">
-                                <div className="flex items-center space-x-3 mb-4">
-                                    <div className="p-3 bg-blue-500 bg-opacity-20 rounded-lg">
-                                        <span className="text-2xl">💪</span>
-                                    </div>
-                                    <div>
-                                        <h4 className="text-xl font-bold text-white">{selectedWorkout.Exercise_Name}</h4>
-                                        <p className="text-blue-400">{selectedWorkout.Exercise_Category}</p>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div className="h-64 overflow-y-auto pr-2 custom-scrollbar">
-                                <h4 className="text-lg font-semibold text-orange-400 mb-2 flex items-center">
-                                    <span className="mr-2">📜</span> Proper Form and Instructions
-                                </h4>
-                                <div className="space-y-3">
-                                    {selectedWorkout.Instructions?.map((instruction, index) => (
-                                        <motion.div 
-                                            key={index}
-                                            initial={{ opacity: 0, x: -10 }}
-                                            animate={{ opacity: 1, x: 0 }}
-                                            transition={{ delay: index * 0.1 }}
-                                            className="flex items-start space-x-3"
+                            {/* Modern header section with gradient */}
+                            <div className="bg-gradient-to-r from-blue-900 to-indigo-900 p-6 relative">
+                                <div className="absolute inset-0 bg-black opacity-30"></div>
+                                <div className="relative z-10">
+                                    <div className="flex justify-between items-center mb-2">
+                                        <h3 className="text-2xl font-bold text-white font-sans tracking-tight">
+                                            {selectedWorkout.Exercise_Name}
+                                        </h3>
+                                        <motion.button
+                                            whileHover={{ scale: 1.1, rotate: 90 }}
+                                            whileTap={{ scale: 0.9 }}
+                                            onClick={() => closeInstructionsModal()}
+                                            className="p-2 rounded-full bg-black/30 hover:bg-black/50 text-white/80 hover:text-white"
+                                            transition={{ duration: 0.2 }}
                                         >
-                                            <div className="bg-blue-500 bg-opacity-20 rounded-full p-1 flex items-center justify-center min-w-8 h-8">
-                                                <span className="font-bold text-blue-400">{index + 1}</span>
-                                            </div>
-                                            <p className="text-gray-300">{instruction}</p>
-                                        </motion.div>
-                                    ))}
+                                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                                            </svg>
+                                        </motion.button>
+                                    </div>
+                                    <p className="text-blue-200 text-sm">{selectedWorkout.Exercise_Category}</p>
                                 </div>
                             </div>
 
-                            <div className="mt-6 flex justify-end">
-                                <motion.button
-                                    whileHover={{ scale: 1.05 }}
-                                    whileTap={{ scale: 0.95 }}
-                                    onClick={() => setShowModal(false)}
-                                    className="bg-gradient-to-r from-blue-600 to-blue-800 text-white py-2 px-6 rounded-lg font-medium transition-all duration-300"
-                                >
-                                    Got it!
-                                </motion.button>
-                            </div>
-                        </motion.div>
-                    </motion.div>
+                            {/* Content section with 3D card effect */}
+                            <div className="p-6 bg-gray-800/50 backdrop-blur-md">
+                                <div className="bg-blue-900/10 rounded-lg p-4 mb-4 border border-blue-500/20 shadow-inner transform perspective-600">
+                                    <div className="flex items-center space-x-3">
+                                        <div className="p-3 bg-blue-500 bg-opacity-20 rounded-lg">
+                                            <motion.span 
+                                                animate={{ 
+                                                    rotateY: [0, 180, 360],
+                                                    scale: [1, 1.2, 1]
+                                                }}
+                                                transition={{ 
+                                                    duration: 3, 
+                                                    repeat: Infinity,
+                                                    repeatType: "loop"
+                                                }}
+                                                className="text-2xl inline-block"
+                                            >💪</motion.span>
+                                        </div>
+                                        <div>
+                                            <h4 className="text-lg font-bold text-white">Proper Form Instructions</h4>
+                                            <p className="text-blue-300 text-sm">Follow these steps carefully</p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Instructions with enhanced bullet points */}
+                                <div className="h-64 overflow-y-auto pr-2 custom-scrollbar">
+                                    <ul className="space-y-4">
+                                        {selectedWorkout.Instructions?.map((instruction, index) => (
+                                            <motion.li 
+                                                key={index}
+                                                custom={index}
+                                                initial="hidden"
+                                                animate="visible"
+                                                whileHover="hover"
+                                                variants={bulletVariants}
+                                                className="flex items-start"
+                                            >
+                                                {/* Animated bullet point with pulse effect */}
+                                                <motion.div 
+                                                    className="flex-shrink-0 mr-4"
+                                                    animate={{ 
+                                                        scale: [1, 1.1, 1],
+                                                        opacity: [0.7, 1, 0.7]
+                                                    }}
+                                                    transition={{ 
+                                                        duration: 2,
+                                                        repeat: Infinity, 
+                                                        repeatType: "mirror", 
+                                                        delay: index * 0.2
+                                                    }}
+                                                >
+                                                    <div className="flex items-center justify-center w-8 h-8 rounded-full bg-gradient-to-r from-blue-600 to-indigo-700 shadow-lg">
+                                                        <span className="text-white font-bold">{index+1}</span>
+                                                    </div>
+                                                </motion.div>
+                                                
+                                                {/* Instruction text with modern styling */}
+                                                <div className="bg-gray-800/80 backdrop-blur rounded-lg p-3 flex-grow border-l-4 border-blue-500 shadow-md">
+                                                    <p className="text-gray-200 font-sans tracking-wide leading-relaxed">
+                                                        {instruction}
+                                                    </p>
+                                                </div>
+                                            </motion.li>
+                                        ))}
+                                    </ul>
+                                </div>
+                                
+                                {/* Interactive element - Progress tracker */}
+                                <div className="mt-6 bg-gray-900/50 rounded-lg p-4 border border-gray-700">
+                                    <h4 className="text-blue-300 font-semibold mb-2">Form Mastery Progress</h4>
+                                    <div className="w-full bg-gray-700 rounded-full h-2.5">
+                                        <motion.div 
+                                          className="bg-gradient-to-r from-blue-500 to-indigo-600 h-2.5 rounded-full" 
+                            initial={{ width: 0 }} 
+                            animate={{ width: "65%" }}
+                            transition={{ duration: 1.5, delay: 0.5 }}
+                        ></motion.div>
+                    </div>
+                    <div className="flex justify-between mt-1 text-xs text-gray-400">
+                        <span>Beginner</span>
+                        <span>Intermediate</span>
+                        <span>Expert</span>
+                    </div>
+                </div>
+
+                {/* Action buttons */}
+                <div className="mt-6 flex space-x-4">
+                    <motion.button 
+                        whileHover={{ scale: 1.03 }}
+                        whileTap={{ scale: 0.97 }}
+                        onClick={() => closeInstructionsModal()}
+                        className="flex-1 bg-gray-700 hover:bg-gray-600 text-white py-3 px-4 rounded-lg font-medium flex items-center justify-center space-x-2"
+                    >
+                        <span>Close</span>
+                    </motion.button>
+                    <motion.button 
+                        whileHover={{ scale: 1.03 }}
+                        whileTap={{ scale: 0.97 }}
+                        className="flex-1 bg-gradient-to-r from-blue-600 to-indigo-700 hover:from-blue-700 hover:to-indigo-800 text-white py-3 px-4 rounded-lg font-medium flex items-center justify-center space-x-2"
+                    >
+                        <span>Save to Favorites</span>
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                        </svg>
+                    </motion.button>
+                </div>
+            </div>
+        </motion.div>
+    </motion.div>
                 )}
             </AnimatePresence>
-
         </div>
     );
 };
