@@ -6,7 +6,7 @@ const userRoutes = require("./routes/userRoutes");
 const workoutRoutes = require("./routes/workoutRoutes");
 const exerciseRoutes = require("./routes/exerciseRoutes");
 const nutritionRoutes = require("./routes/nutritionRoutes");
-
+const scannerRouter = require('./routes/scannerRouter');
 
 
 
@@ -22,6 +22,7 @@ app.use("/api/exercises", exerciseRoutes);
 app.use("/api/workouts", workoutRoutes);
 app.use("/api/nutrition", nutritionRoutes);
 app.use("/api/diet", require("./routes/dietRoutes"));
+app.use('/api', scannerRouter);
 
 
 
