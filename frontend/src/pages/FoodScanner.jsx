@@ -2,9 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Camera, Upload, X, ChevronDown, ChevronUp, Award, Sparkles, Zap, Beaker} from 'lucide-react';
 import { analyzeFoodImage } from '../api/foodScanner';
-import { parseNutritionData } from '../utils/parseNutritionData';
-import NutritionFacts from '../components/NutritionFacts';
-import NutrientPieChart from '../components/NutrientPieChart';
+
 
 const FoodScanner = () => {
   const [file, setFile] = useState(null);
@@ -39,9 +37,7 @@ const FoodScanner = () => {
     setLoading(true);
     try {
       const res = await analyzeFoodImage(file);
-      // Parse the result before setting it
-      const parsedResult = parseNutritionData(res.result);
-      setResult(parsedResult);
+      setResult(res.result);
     } catch (err) {
       setResult({ error: "Failed to analyze image. Please try again." });
     }
@@ -81,6 +77,7 @@ const FoodScanner = () => {
     setPreviewUrl(null);
     setResult(null);
   };
+
   return (
     <div className="min-h-screen relative overflow-hidden bg-gradient-to-br from-indigo-900 via-purple-900 to-pink-800 p-6">
       {/* Animated background elements */}
@@ -366,61 +363,34 @@ const FoodScanner = () => {
                           </motion.p>
                         </div>
                         
-                        {/* Detailed Analysis Section */}
-                        {detailsOpen && (
-                          <motion.div
-                            initial={{ height: 0 }}
-                            animate={{ height: "auto" }}
-                            exit={{ height: 0 }}
-                            transition={{ duration: 0.3 }}
-                            className="overflow-hidden"
-                          >
-                            <div className="p-4 border-t border-white/10 space-y-6">
-                              {/* Nutrition Facts Cards */}
-                              <div>
-                                <h3 className="text-lg font-semibold text-white mb-3">Nutrition Overview</h3>
-                                <NutritionFacts nutrition={result} />
-                              </div>
-                              
-                              {/* Pie Chart */}
-                              <div>
-                                <h3 className="text-lg font-semibold text-white mb-3">Macronutrient Distribution</h3>
-                                <div className="bg-white/5 rounded-xl p-4 backdrop-blur-sm border border-white/10">
-                                  <NutrientPieChart data={result} />
-                                </div>
-                              </div>
-                              
-                              {/* Additional Details */}
-                              {result.details && (
-                                <div>
-                                  <h3 className="text-lg font-semibold text-white mb-3">Additional Information</h3>
-                                  <div className="bg-white/5 rounded-xl p-4 backdrop-blur-sm border border-white/10">
-                                    <p className="text-white/80 whitespace-pre-wrap">{result.details}</p>
+                        {/* Detailed Analysis */}
+                        <div className="p-6">
+                          <div className="bg-white/5 rounded-xl overflow-hidden backdrop-blur-sm border border-white/10">
+                            <button 
+                              onClick={() => setDetailsOpen(!detailsOpen)}
+                              className="w-full flex items-center justify-between p-4 text-left font-medium text-white"
+                            >
+                              Detailed Analysis
+                              {detailsOpen ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
+                            </button>
+                            
+                            <AnimatePresence>
+                              {detailsOpen && (
+                                <motion.div
+                                  initial={{ height: 0 }}
+                                  animate={{ height: "auto" }}
+                                  exit={{ height: 0 }}
+                                  transition={{ duration: 0.3 }}
+                                  className="overflow-hidden"
+                                >
+                                  <div className="p-4 border-t border-white/10">
+                                    <pre className="whitespace-pre-wrap text-white/80 font-mono text-sm overflow-auto max-h-64">{typeof result === 'string' ? result : JSON.stringify(result, null, 2)}</pre>
                                   </div>
-                                </div>
+                                </motion.div>
                               )}
-                              
-                              {/* Ingredients if available */}
-                              {result.ingredients && (
-                                <div>
-                                  <h3 className="text-lg font-semibold text-white mb-3">Identified Ingredients</h3>
-                                  <div className="bg-white/5 rounded-xl p-4 backdrop-blur-sm border border-white/10">
-                                    <div className="flex flex-wrap gap-2">
-                                      {result.ingredients.split(',').map((ingredient, i) => (
-                                        <span 
-                                          key={i} 
-                                          className="px-3 py-1 bg-cyan-900/30 text-cyan-100 rounded-full text-sm border border-cyan-500/30"
-                                        >
-                                          {ingredient.trim()}
-                                        </span>
-                                      ))}
-                                    </div>
-                                  </div>
-                                </div>
-                              )}
-                            </div>
-                          </motion.div>
-                        )}
+                            </AnimatePresence>
+                          </div>
+                        </div>
                       </>
                     )}
                   </motion.div>
