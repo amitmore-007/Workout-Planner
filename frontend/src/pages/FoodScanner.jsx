@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Camera, Upload, X, ChevronDown, ChevronUp, Award, Sparkles, Zap, Beaker} from 'lucide-react';
 import { analyzeFoodImage } from '../api/foodScanner';
+import ReactMarkdown from 'react-markdown';
 
 
 const FoodScanner = () => {
