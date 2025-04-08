@@ -1,16 +1,14 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Camera, Upload, X, ChevronDown, ChevronUp, Award, Sparkles, Zap, Beaker} from 'lucide-react';
+import { Camera, Upload, X, ChevronDown, ChevronUp, Award, Sparkles, Zap, Beaker } from 'lucide-react';
 import { analyzeFoodImage } from '../api/foodScanner';
-import ReactMarkdown from 'react-markdown';
-
 
 const FoodScanner = () => {
   const [file, setFile] = useState(null);
   const [result, setResult] = useState(null);
   const [loading, setLoading] = useState(false);
   const [dragActive, setDragActive] = useState(false);
-  const [detailsOpen, setDetailsOpen] = useState(true);
+  const [selectedFood, setSelectedFood] = useState(null);
   const fileInputRef = useRef(null);
   const [previewUrl, setPreviewUrl] = useState(null);
 
@@ -39,6 +37,7 @@ const FoodScanner = () => {
     try {
       const res = await analyzeFoodImage(file);
       setResult(res.result);
+      setSelectedFood(null); // Reset selected food when getting new results
     } catch (err) {
       setResult({ error: "Failed to analyze image. Please try again." });
     }
@@ -77,6 +76,227 @@ const FoodScanner = () => {
     setFile(null);
     setPreviewUrl(null);
     setResult(null);
+    setSelectedFood(null);
+  };
+
+  // Parse result JSON if it's a string
+  const processedResult = React.useMemo(() => {
+    if (!result || result.error) return result;
+    
+    // If result is already an object with a foods array, use it
+    if (typeof result === 'object' && result.foods) {
+      return result;
+    }
+    
+    // If result is a string, try to parse it as JSON
+    if (typeof result === 'string') {
+      try {
+        // Try to find JSON in the string
+        const jsonMatch = result.match(/```json\s*([\s\S]*?)\s*```/);
+        if (jsonMatch) {
+          return JSON.parse(jsonMatch[1].trim());
+        }
+        
+        // Try parsing the whole string as JSON
+        return JSON.parse(result);
+      } catch (e) {
+        // If parsing fails, return original result
+        return { textResult: result };
+      }
+    }
+    
+    return result;
+  }, [result]);
+
+  // Render nutrition bar
+  const NutritionBar = ({ label, value, color, max = 100 }) => {
+    const percentage = Math.min((value / max) * 100, 100);
+    
+    return (
+      <div className="mb-3">
+        <div className="flex justify-between mb-1">
+          <span className="text-sm text-white/80">{label}</span>
+          <span className="text-sm text-white/80">{value}g</span>
+        </div>
+        <div className="h-2 bg-white/10 rounded-full">
+          <motion.div 
+            initial={{ width: 0 }}
+            animate={{ width: `${percentage}%` }}
+            transition={{ duration: 0.8, ease: "easeOut" }}
+            className={`h-full rounded-full ${color}`}
+          />
+        </div>
+      </div>
+    );
+  };
+
+  // Render food card
+  const FoodCard = ({ food, index, onClick, isSelected }) => {
+    return (
+      <motion.div 
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.2 + (index * 0.1) }}
+        onClick={onClick}
+        className={`cursor-pointer p-5 ${isSelected ? 'bg-white/20' : 'bg-white/10'} backdrop-blur-sm rounded-xl border ${isSelected ? 'border-cyan-300/50' : 'border-white/10'} shadow-lg hover:shadow-xl transition-all hover:scale-102 mb-4`}
+      >
+        <div className="flex justify-between items-center mb-2">
+        <h3 className="text-lg font-semibold text-white">
+          {food.quantity > 1 ? `${food.quantity}× ${food.name}` : food.name}
+        </h3>
+        <div className={`px-3 py-1 rounded-full text-xs font-medium ${food.isHealthy ? 'bg-green-500/20 text-green-300' : 'bg-pink-500/20 text-pink-300'}`}>
+          {food.isHealthy ? 'Healthy' : 'Not Healthy'}
+        </div>
+      </div>
+        
+        <div className="flex items-center justify-between">
+          <div className="flex items-center">
+            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-500/30 to-pink-500/30 flex items-center justify-center mr-3">
+              <span className="text-white font-bold">{food.calories}</span>
+            </div>
+            <div className="text-white/70 text-sm">calories</div>
+          </div>
+          
+          <div className="flex space-x-3">
+            <div className="text-center">
+              <div className="text-sm font-semibold text-white">{food.protein}g</div>
+              <div className="text-xs text-white/60">Protein</div>
+            </div>
+            <div className="text-center">
+              <div className="text-sm font-semibold text-white">{food.carbs}g</div>
+              <div className="text-xs text-white/60">Carbs</div>
+            </div>
+            <div className="text-center">
+              <div className="text-sm font-semibold text-white">{food.fats}g</div>
+              <div className="text-xs text-white/60">Fats</div>
+            </div>
+          </div>
+        </div>
+      </motion.div>
+    );
+  };
+
+  // Render food detail panel
+  const FoodDetailPanel = ({ food }) => {
+    return (
+      <motion.div
+        initial={{ opacity: 0, height: 0 }}
+        animate={{ opacity: 1, height: 'auto' }}
+        exit={{ opacity: 0, height: 0 }}
+        transition={{ duration: 0.3 }}
+        className="bg-gradient-to-br from-cyan-900/30 to-purple-900/30 backdrop-blur-sm rounded-xl border border-white/10 p-6 mb-6"
+      >
+        <h3 className="text-xl font-bold text-white mb-4 flex items-center">
+          <Sparkles className="mr-2 text-cyan-300" size={18} /> 
+          {food.name} Nutritional Breakdown
+        </h3>
+        
+        <div className="grid md:grid-cols-2 gap-6">
+          <div>
+            <div className="mb-6">
+              <div className="text-lg font-semibold text-white mb-2">Macronutrients</div>
+              <NutritionBar label="Protein" value={food.protein} color="bg-green-400" />
+              <NutritionBar label="Carbs" value={food.carbs} color="bg-blue-400" />
+              <NutritionBar label="Fats" value={food.fats} color="bg-yellow-400" />
+              {food.fiber !== undefined && (
+                <NutritionBar label="Fiber" value={food.fiber} color="bg-amber-400" max={30} />
+              )}
+              {food.sugar !== undefined && (
+                <NutritionBar label="Sugar" value={food.sugar} color="bg-pink-400" max={50} />
+              )}
+            </div>
+            
+            <div className="p-4 bg-white/10 rounded-lg">
+              <div className="text-lg font-semibold text-white mb-2">Calories</div>
+              <div className="flex items-center">
+                <div className="w-16 h-16 rounded-full bg-gradient-to-br from-cyan-500/40 to-pink-500/40 flex items-center justify-center mr-4">
+                  <span className="text-white text-xl font-bold">{food.calories}</span>
+                </div>
+                <div className="text-white/70">Total Calories</div>
+              </div>
+            </div>
+          </div>
+          
+          <div>
+            <div className="text-lg font-semibold text-white mb-2">Health Assessment</div>
+            <div className={`p-4 rounded-lg ${food.isHealthy ? 'bg-green-500/20' : 'bg-pink-500/20'} mb-4`}>
+              <div className={`text-lg font-semibold mb-2 ${food.isHealthy ? 'text-green-300' : 'text-pink-300'}`}>
+                {food.isHealthy ? 'Healthy Choice' : 'Health Consideration'}
+              </div>
+              <p className="text-white/80">{food.healthReason}</p>
+            </div>
+            
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              onClick={() => setSelectedFood(null)}
+              className="w-full bg-white/10 hover:bg-white/20 text-white py-2 rounded-lg font-medium transition-colors mt-2 border border-white/20"
+            >
+              Back to All Foods
+            </motion.button>
+          </div>
+        </div>
+      </motion.div>
+    );
+  };
+
+  // Render food list with cards
+  const renderFoodList = () => {
+    // Handle raw text result
+    if (processedResult && processedResult.textResult) {
+      return (
+        <div className="bg-white/10 backdrop-blur-lg rounded-2xl shadow-xl p-6 border border-white/20">
+          <div className="flex items-center mb-4">
+            <Sparkles className="mr-2 text-cyan-300" size={20} />
+            <h3 className="text-xl font-semibold text-white">Analysis Results</h3>
+          </div>
+          <div className="bg-white/5 rounded-xl p-4 border border-white/10">
+            <pre className="whitespace-pre-wrap text-white/80 font-mono text-sm overflow-auto max-h-96">{processedResult.textResult}</pre>
+          </div>
+        </div>
+      );
+    }
+
+    // Handle structured result
+    if (processedResult && processedResult.foods) {
+      return (
+        <>
+          {selectedFood ? (
+            <FoodDetailPanel food={selectedFood} />
+          ) : (
+            <>
+              {processedResult.overallAssessment && (
+                <motion.div 
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="bg-gradient-to-r from-cyan-500/20 via-purple-500/20 to-pink-500/20 backdrop-blur-md rounded-xl p-4 mb-6 border border-white/10"
+                >
+                  <div className="text-lg font-semibold text-white mb-1">Overall Assessment</div>
+                  <p className="text-white/80">{processedResult.overallAssessment}</p>
+                </motion.div>
+              )}
+              
+              <div className="text-xl font-semibold text-white mb-4 flex items-center">
+                <Award className="mr-2 text-purple-300" size={20} />
+                Food Items ({processedResult.foods.length})
+              </div>
+              
+              {processedResult.foods.map((food, index) => (
+                <FoodCard 
+                  key={index}
+                  food={food}
+                  index={index}
+                  onClick={() => setSelectedFood(food)}
+                  isSelected={false}
+                />
+              ))}
+            </>
+          )}
+        </>
+      );
+    }
+
+    return null;
   };
 
   return (
@@ -319,18 +539,17 @@ const FoodScanner = () => {
                 )}
               </AnimatePresence>
 
-              {/* Results Card */}
+              {/* Results Section */}
               <AnimatePresence>
-                {result && (
+                {result && !loading && (
                   <motion.div 
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: -20 }}
                     transition={{ type: "spring", stiffness: 100 }}
-                    className="bg-white/10 backdrop-blur-lg rounded-2xl shadow-xl overflow-hidden border border-white/20"
                   >
                     {result.error ? (
-                      <div className="p-8 text-center">
+                      <div className="bg-white/10 backdrop-blur-lg rounded-2xl shadow-xl p-8 text-center border border-white/20">
                         <div className="w-16 h-16 bg-pink-900/30 backdrop-blur-sm rounded-full flex items-center justify-center mx-auto mb-4 border border-pink-500/30">
                           <X size={32} className="text-pink-400" />
                         </div>
@@ -344,159 +563,39 @@ const FoodScanner = () => {
                         </button>
                       </div>
                     ) : (
-                      <>
-                        <div className="bg-gradient-to-r from-cyan-500/30 via-purple-500/30 to-pink-500/30 backdrop-blur-md p-6 text-white border-b border-white/20">
-                          <motion.h2 
-                            initial={{ opacity: 0, y: -10 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ delay: 0.2 }}
-                            className="text-2xl font-bold mb-2 flex items-center"
-                          >
-                            <Sparkles className="mr-2 text-cyan-300" size={20} /> Nutritional Analysis
-                          </motion.h2>
-                          <motion.p 
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            transition={{ delay: 0.3 }}
-                            className="text-white/70"
-                          >
-                            Your food has been successfully analyzed
-                          </motion.p>
-                        </div>
+                      <div>
+                        <div className="bg-gradient-to-r from-cyan-500/30 via-purple-500/30 to-pink-500/30 backdrop-blur-md p-6 text-white border-b border-white/20 rounded-t-2xl">
+                        <motion.h2 
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.2 }}
+                className="text-2xl font-bold flex items-center"
+              >
+                <Sparkles className="mr-2 text-cyan-300" size={20} />
+                Analysis Results
+              </motion.h2>                      
+            </div>
                         
-                        {/* Detailed Analysis */}
-                        <div className="p-6">
-                          <div className="bg-white/5 rounded-xl overflow-hidden backdrop-blur-sm border border-white/10">
-                            <button 
-                              onClick={() => setDetailsOpen(!detailsOpen)}
-                              className="w-full flex items-center justify-between p-4 text-left font-medium text-white"
-                            >
-                              Detailed Analysis
-                              {detailsOpen ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
-                            </button>
-                            
-                            <AnimatePresence>
-                              {detailsOpen && (
-                                <motion.div
-                                  initial={{ height: 0 }}
-                                  animate={{ height: "auto" }}
-                                  exit={{ height: 0 }}
-                                  transition={{ duration: 0.3 }}
-                                  className="overflow-hidden"
-                                >
-                                  <div className="p-4 border-t border-white/10">
-                                    <pre className="whitespace-pre-wrap text-white/80 font-mono text-sm overflow-auto max-h-64">{typeof result === 'string' ? result : JSON.stringify(result, null, 2)}</pre>
-                                  </div>
-                                </motion.div>
-                              )}
-                            </AnimatePresence>
-                          </div>
-                        </div>
-                      </>
-                    )}
-                  </motion.div>
-                )}
-              </AnimatePresence>
-              
-              {/* Placeholder message when no file is selected */}
-              {!file && !loading && !result && (
-                <motion.div 
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ delay: 0.5 }}
-                  className="bg-white/10 backdrop-blur-lg rounded-2xl shadow-lg p-8 flex flex-col items-center text-center h-full border border-white/20"
-                >
-                  <div className="flex-1 flex flex-col items-center justify-center">
-                    <motion.div 
-                      animate={{ 
-                        y: [0, -10, 0],
-                        boxShadow: ["0 0 0px rgba(236, 72, 153, 0)", "0 0 30px rgba(236, 72, 153, 0.6)", "0 0 0px rgba(236, 72, 153, 0)"]
-                      }}
-                      transition={{ 
-                        y: { duration: 2, repeat: Infinity, repeatType: "reverse" },
-                        boxShadow: { duration: 2, repeat: Infinity, repeatType: "reverse" }
-                      }}
-                      className="w-24 h-24 bg-gradient-to-br from-cyan-500/30 to-purple-500/30 rounded-full flex items-center justify-center mb-6 border border-white/30"
-                    >
-                      <Camera size={40} className="text-white" />
-                    </motion.div>
-                    <motion.h2 
-                      animate={{ 
-                        textShadow: ["0 0 0px rgba(255,255,255,0.5)", "0 0 10px rgba(255,255,255,0.8)", "0 0 0px rgba(255,255,255,0.5)"] 
-                      }}
-                      transition={{ duration: 3, repeat: Infinity }}
-                      className="text-2xl font-bold mb-3 text-transparent bg-clip-text bg-gradient-to-r from-cyan-300 to-pink-300"
-                    >
-                      Start Your Food Analysis
-                    </motion.h2>
-                    <p className="text-white/70 max-w-md mb-6">
-                      Upload a clear image of your food to get detailed nutritional information using our advanced AI technology.
-                    </p>
-                    <motion.button 
-                      whileHover={{ scale: 1.03, boxShadow: "0 0 20px rgba(139, 92, 246, 0.5)" }}
-                      whileTap={{ scale: 0.98 }}
-                      onClick={() => fileInputRef.current.click()}
-                      className="bg-gradient-to-r from-cyan-500 via-purple-500 to-pink-500 text-white px-8 py-3 rounded-full font-medium shadow-lg hover:shadow-xl transition-shadow border border-white/20"
-                    >
-                      Get Started
-                    </motion.button>
-                  </div>
-                  
-                  <div className="mt-10 pt-6 border-t border-white/20 w-full">
-                    <div className="grid grid-cols-3 gap-4">
-                      {[
-                        { title: 'Accurate Analysis', icon: <Sparkles size={18} className="text-cyan-300" /> },
-                        { title: 'Instant Results', icon: <Zap size={18} className="text-purple-300" /> },
-                        { title: 'Diet Tracking', icon: <Beaker size={18} className="text-pink-300" /> }
-                      ].map((feature, index) => (
-                        <motion.div 
-                          key={feature.title}
-                          initial={{ opacity: 0, y: 10 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          transition={{ delay: 0.6 + (index * 0.1) }}
-                          className="flex flex-col items-center"
-                        >
-                          <div className="w-10 h-10 bg-gradient-to-br from-white/20 to-white/5 rounded-full flex items-center justify-center mb-2 border border-white/20">
-                            {feature.icon}
-                          </div>
-                          <p className="text-sm font-medium text-white/80">{feature.title}</p>
-                        </motion.div>
-                      ))}
-                    </div>
-                  </div>
-                </motion.div>
-              )}
-            </motion.div>
+            {renderFoodList()}
+                        
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              onClick={clearImage}
+              className="mt-6 bg-white/10 hover:bg-white/20 text-white px-6 py-3 rounded-lg font-medium transition-colors flex items-center justify-center border border-white/20 w-full"
+            >
+              <Camera className="mr-2" size={18} /> 
+              Scan Another Image
+            </motion.button>
+          </div>
+        )}
+      </motion.div>
+    )}
+  </AnimatePresence>
+</motion.div>
           </div>
         </motion.div>
       </div>
-
-      {/* Dynamic floating light particles */}
-      {[...Array(20)].map((_, i) => (
-        <motion.div
-          key={`particle-${i}`}
-          className="absolute rounded-full bg-white"
-          style={{
-            width: Math.random() * 4 + 1,
-            height: Math.random() * 4 + 1,
-            left: `${Math.random() * 100}%`,
-            top: `${Math.random() * 100}%`,
-          }}
-          animate={{
-            x: [0, Math.random() * 100 - 50],
-            y: [0, Math.random() * 100 - 50],
-            opacity: [0, 0.8, 0],
-            scale: [0, 1, 0],
-          }}
-          transition={{
-            duration: Math.random() * 5 + 2,
-            repeat: Infinity,
-            repeatType: 'loop',
-            ease: 'easeInOut',
-            delay: Math.random() * 2,
-          }}
-        />
-      ))}
     </div>
   );
 };
