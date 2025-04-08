@@ -4,7 +4,7 @@ import Dashboard from "./pages/Dashboard";
 import WorkoutDashboard from "./pages/WorkoutPlan";
 import DietPlan from "./pages/DietPlan";
 import FoodScanner from "./pages/FoodScanner";
-import VideoMeet from "./pages/VideoMeet";
+// import VideoMeet from "./pages/VideoMeet";
 import Progress from "./pages/Progress";
 import Settings from "./pages/Settings";
 import Login from "./pages/Login";
@@ -26,7 +26,7 @@ const App = () => {
           <Route path="workouts" element={<WorkoutDashboard />} />
           <Route path="diet" element={<DietPlan />} />
           <Route path="scanner" element={<FoodScanner />} />
-          <Route path="video-meet" element={<VideoMeet />} />
+          {/* <Route path="video-meet" element={<VideoMeet />} /> */}
           <Route path="progress" element={<Progress />} />
           <Route path="settings" element={<Settings />} />
         </Route>

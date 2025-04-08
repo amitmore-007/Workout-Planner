@@ -1,18 +1,25 @@
 import axios from 'axios';
 
-export const analyzeFoodImage = async (file) => {
-  const formData = new FormData();
-  formData.append("file", file);
+// src/api/foodScanner.js
 
+export const analyzeFoodImage = async (file) => {
   try {
-    const response = await axios.post("http://127.0.0.1:8000/analyze-image/", formData, {
-      headers: {
-        "Content-Type": "multipart/form-data"
-      }
+    const formData = new FormData();
+    formData.append('file', file);
+    
+    const response = await fetch('http://localhost:8000/api/analyze-food', {
+      method: 'POST',
+      body: formData,
     });
-    return response.data;
+    
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.error || 'Failed to analyze image');
+    }
+    
+    return await response.json();
   } catch (error) {
-    console.error("Error analyzing image:", error);
+    console.error('Error analyzing food image:', error);
     throw error;
   }
 };

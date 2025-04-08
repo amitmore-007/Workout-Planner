@@ -130,51 +130,51 @@ const FoodScanner = () => {
     );
   };
 
-  // Render food card
-  const FoodCard = ({ food, index, onClick, isSelected }) => {
-    return (
-      <motion.div 
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.2 + (index * 0.1) }}
-        onClick={onClick}
-        className={`cursor-pointer p-5 ${isSelected ? 'bg-white/20' : 'bg-white/10'} backdrop-blur-sm rounded-xl border ${isSelected ? 'border-cyan-300/50' : 'border-white/10'} shadow-lg hover:shadow-xl transition-all hover:scale-102 mb-4`}
-      >
-        <div className="flex justify-between items-center mb-2">
+ // Updated FoodCard component with quantity display
+const FoodCard = ({ food, index, onClick, isSelected }) => {
+  return (
+    <motion.div 
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: 0.2 + (index * 0.1) }}
+      onClick={onClick}
+      className={`cursor-pointer p-5 ${isSelected ? 'bg-white/20' : 'bg-white/10'} backdrop-blur-sm rounded-xl border ${isSelected ? 'border-cyan-300/50' : 'border-white/10'} shadow-lg hover:shadow-xl transition-all hover:scale-102 mb-4`}
+    >
+      <div className="flex justify-between items-center mb-2">
         <h3 className="text-lg font-semibold text-white">
-          {food.quantity > 1 ? `${food.quantity}× ${food.name}` : food.name}
+          {(food.quantity && food.quantity > 1) ? `${food.quantity}× ${food.name}` : food.name}
         </h3>
         <div className={`px-3 py-1 rounded-full text-xs font-medium ${food.isHealthy ? 'bg-green-500/20 text-green-300' : 'bg-pink-500/20 text-pink-300'}`}>
           {food.isHealthy ? 'Healthy' : 'Not Healthy'}
         </div>
       </div>
-        
-        <div className="flex items-center justify-between">
-          <div className="flex items-center">
-            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-500/30 to-pink-500/30 flex items-center justify-center mr-3">
-              <span className="text-white font-bold">{food.calories}</span>
-            </div>
-            <div className="text-white/70 text-sm">calories</div>
+      
+      <div className="flex items-center justify-between">
+        <div className="flex items-center">
+          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-500/30 to-pink-500/30 flex items-center justify-center mr-3">
+            <span className="text-white font-bold">{food.calories}</span>
           </div>
-          
-          <div className="flex space-x-3">
-            <div className="text-center">
-              <div className="text-sm font-semibold text-white">{food.protein}g</div>
-              <div className="text-xs text-white/60">Protein</div>
-            </div>
-            <div className="text-center">
-              <div className="text-sm font-semibold text-white">{food.carbs}g</div>
-              <div className="text-xs text-white/60">Carbs</div>
-            </div>
-            <div className="text-center">
-              <div className="text-sm font-semibold text-white">{food.fats}g</div>
-              <div className="text-xs text-white/60">Fats</div>
-            </div>
+          <div className="text-white/70 text-sm">calories</div>
+        </div>
+        
+        <div className="flex space-x-3">
+          <div className="text-center">
+            <div className="text-sm font-semibold text-white">{food.protein}g</div>
+            <div className="text-xs text-white/60">Protein</div>
+          </div>
+          <div className="text-center">
+            <div className="text-sm font-semibold text-white">{food.carbs}g</div>
+            <div className="text-xs text-white/60">Carbs</div>
+          </div>
+          <div className="text-center">
+            <div className="text-sm font-semibold text-white">{food.fats}g</div>
+            <div className="text-xs text-white/60">Fats</div>
           </div>
         </div>
-      </motion.div>
-    );
-  };
+      </div>
+    </motion.div>
+  );
+};
 
   // Render food detail panel
   const FoodDetailPanel = ({ food }) => {
