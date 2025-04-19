@@ -1,37 +1,43 @@
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import Layout from "./components/Layout";
-import Dashboard from "./pages/Dashboard";
-import WorkoutDashboard from "./pages/WorkoutPlan";
-import DietPlan from "./pages/DietPlan";
-import FoodScanner from "./pages/FoodScanner";
-// import VideoMeet from "./pages/VideoMeet";
-import Progress from "./pages/Progress";
-import Settings from "./pages/Settings";
-import Login from "./pages/Login";
-import Register from "./pages/Register";
+import UserDashboard from "./pages/user/UserDashboard";
+import UserWorkoutDashboard from "./pages/user/UserWorkoutPlan";
+import UserDietPlan from "./pages/user/UserDietPlan";
+import FoodScanner from "./pages/user/FoodScanner";
+// import UserVideoMeet from "./pages/user/UserVideoMeet";
+import Progress from "./pages/user/Progress";
+import Settings from "./pages/user/Settings";
+import UserLogin from "./pages/user/UserLogin";
+import UserRegister from "./pages/user/UserRegister";
 import LandingPage from "./pages/LandingPage";
+import CreatorLogin from "./pages/creator/CreatorLogin";
+import CreatorRegister from "./pages/creator/CreatorRegister";
+import SelectRole from "./components/SelectRole";
 
 const App = () => {
   return (
     <Router>
-      <Routes>
-        {/* Public Routes (No Sidebar) */}
-        <Route path="/" element={<LandingPage />} />
-        <Route path="/login" element={<Login />} />
-        <Route path="/register" element={<Register />} />
-
-        {/* Protected Routes (With Sidebar) */}
-        <Route path="/" element={<Layout />}>
-          <Route path="dashboard" element={<Dashboard />} />
-          <Route path="workouts" element={<WorkoutDashboard />} />
-          <Route path="diet" element={<DietPlan />} />
-          <Route path="scanner" element={<FoodScanner />} />
-          {/* <Route path="video-meet" element={<VideoMeet />} /> */}
-          <Route path="progress" element={<Progress />} />
-          <Route path="settings" element={<Settings />} />
-        </Route>
-      </Routes>
-    </Router>
+    <Routes>
+      {/* Public Routes (No Sidebar) */}
+      <Route path="/" element={<LandingPage />} />
+      <Route path="/select-role" element={<SelectRole />} />
+      <Route path="/user-login" element={<UserLogin />} />
+      <Route path="/user-register" element={<UserRegister />} />
+      <Route path="/creator-login" element={<CreatorLogin />} />
+      <Route path="/creator-register" element={<CreatorRegister />} />
+  
+      {/* Protected Routes (With Sidebar) */}
+      <Route path="/" element={<Layout />}>
+        <Route path="user-dashboard" element={<UserDashboard />} />
+        <Route path="user-workouts" element={<UserWorkoutDashboard />} />
+        <Route path="user-diet" element={<UserDietPlan />} />
+        <Route path="user-scanner" element={<FoodScanner />} />
+        <Route path="user-progress" element={<Progress />} />
+        <Route path="user-settings" element={<Settings />} />
+      </Route>
+    </Routes>
+  </Router>
+  
   );
 };
 

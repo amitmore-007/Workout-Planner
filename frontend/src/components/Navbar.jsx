@@ -36,7 +36,7 @@ const Navbar = () => {
   const navItems = [
     { name: "Our Services", path: "/services" },
     { name: "Contact Us", path: "/contact" },
-    { name: "Login", path: "/login", isButton: true }
+    { name: "Login", path: "/select-role", isButton: true }
   ];
 
   return (

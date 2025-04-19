@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
 import { motion, AnimatePresence } from "framer-motion";
-import '../styles/WorkoutPlan.css';
+import '../../styles/WorkoutPlan.css';
 
 const WorkoutPlan = () => {
     const [workouts, setWorkouts] = useState([]);
