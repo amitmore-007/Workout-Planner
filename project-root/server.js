@@ -3,9 +3,10 @@ const dotenv = require("dotenv");
 const cors = require("cors");
 const connectDB = require("./config/db");
 const userRoutes = require("./routes/userRoutes");
-const workoutRoutes = require("./routes/workoutRoutes");
 
+const creatorRoutes = require("./routes/creatorAuth");
 const nutritionRoutes = require("./routes/nutritionRoutes");
+const workoutPlanRoutes = require("./routes/workoutPlanRoutes.js");
 
 
 
@@ -20,9 +21,11 @@ app.use(express.json());
 
 app.use("/api/users", userRoutes);
 
-app.use("/api/workouts", workoutRoutes);
+
 app.use("/api/nutrition", nutritionRoutes);
 app.use("/api/diet", require("./routes/dietRoutes"));
+app.use("/api/creator", creatorRoutes);
+app.use("/api/workoutPlans", workoutPlanRoutes);
 
 
 

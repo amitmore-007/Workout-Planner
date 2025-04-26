@@ -13,6 +13,8 @@ import LandingPage from "./pages/LandingPage";
 import CreatorLogin from "./pages/creator/CreatorLogin";
 import CreatorRegister from "./pages/creator/CreatorRegister";
 import SelectRole from "./components/SelectRole";
+import CreatorDashboard from "./pages/creator/CreatorDashboard";
+import CreateWorkoutPlan from "./pages/creator/CreatePlanForm";
 
 const App = () => {
   return (
@@ -25,6 +27,8 @@ const App = () => {
       <Route path="/user-register" element={<UserRegister />} />
       <Route path="/creator-login" element={<CreatorLogin />} />
       <Route path="/creator-register" element={<CreatorRegister />} />
+      <Route path="/creator-dashboard" element={<CreatorDashboard />} />
+      <Route path="/creator-dashboard/create-workout" element={<CreateWorkoutPlan />} />
   
       {/* Protected Routes (With Sidebar) */}
       <Route path="/" element={<Layout />}>
