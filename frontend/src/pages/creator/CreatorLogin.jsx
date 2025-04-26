@@ -20,7 +20,7 @@ const CreatorLogin = () => {
       const res = await axios.post('http://localhost:5000/api/creator/login', form);
       localStorage.setItem('creatorToken', res.data.token);
       alert('Login success');
-      navigate('/creator/dashboard');
+      navigate('/creator-dashboard');
     } catch (err) {
       alert('Login failed');
     }

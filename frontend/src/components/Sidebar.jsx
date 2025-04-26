@@ -11,7 +11,7 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
     localStorage.removeItem("userInfo");
 
     // ✅ Redirect user to login page
-    navigate("/login");
+    navigate("/user-login");
   };
 
     return (
@@ -24,13 +24,13 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
         {/* Sidebar Links */}
         <nav className="flex flex-col space-y-4">
           {[
-            { name: "Dashboard", to: "/dashboard", icon: <Home className="w-6 h-6" /> },
-            { name: "Workout Plan", to: "/workouts", icon: <Dumbbell className="w-6 h-6" /> },
-            { name: "Diet Plan", to: "/diet", icon: <Utensils className="w-6 h-6" /> },
-            { name: "Food Scanner", to: "/scanner", icon: <Camera className="w-6 h-6" /> },
+            { name: "Dashboard", to: "/user-dashboard", icon: <Home className="w-6 h-6" /> },
+            { name: "Workout Plan", to: "/user-workouts", icon: <Dumbbell className="w-6 h-6" /> },
+            { name: "Diet Plan", to: "/user-diet", icon: <Utensils className="w-6 h-6" /> },
+            { name: "Food Scanner", to: "/user-scanner", icon: <Camera className="w-6 h-6" /> },
             { name: "Video Meet", to: "/video-meet", icon: <Video className="w-6 h-6" /> },
-            { name: "Progress", to: "/progress", icon: <BarChart className="w-6 h-6" /> },
-            { name: "Settings", to: "/settings", icon: <Settings className="w-6 h-6" /> },
+            { name: "Progress", to: "/user-progress", icon: <BarChart className="w-6 h-6" /> },
+            { name: "Settings", to: "/user-settings", icon: <Settings className="w-6 h-6" /> },
           ].map((item, index) => (
             <Link
               key={index}

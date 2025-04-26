@@ -79,7 +79,7 @@ const Login = () => {
       console.log("Token Stored:", data.token); // Debugging
   
       // Redirect user to dashboard
-      navigate("/dashboard");
+      navigate("/user-dashboard");
     } catch (err) {
       setError(err.message);
     } finally {
@@ -207,7 +207,7 @@ const Login = () => {
           <div className="mt-6 text-center text-white/80">
             <p>
               New to our gym?{" "}
-              <a href="/register" className="text-orange-400 hover:text-orange-300 font-medium transition-colors duration-300 relative inline-block group">
+              <a href="/user-register" className="text-orange-400 hover:text-orange-300 font-medium transition-colors duration-300 relative inline-block group">
                 <span>Sign Up Now</span>
                 <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-orange-400 group-hover:w-full transition-all duration-300"></span>
               </a>
