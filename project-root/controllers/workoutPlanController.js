@@ -119,10 +119,114 @@ const deleteExerciseFromDay = async (req, res) => {
 
 
 
+const getWorkoutPlans = async (req, res) => {
+  try {
+    const plans = await WorkoutPlan.find({ creatorId: req.user.id });
+    res.status(200).json(plans);
+  } catch (err) {
+    console.error("Error fetching workout plans:", err);
+    res.status(500).json({ error: "Failed to fetch workout plans" });
+  }
+};
+
+// @desc    Get single workout plan
+// @route   GET /api/workoutPlans/:id
+// @access  Private
+const getWorkoutPlanById = async (req, res) => {
+  try {
+    const plan = await WorkoutPlan.findOne({
+      _id: req.params.id,
+      creatorId: req.user.id
+    });
+    
+    if (!plan) {
+      return res.status(404).json({ error: "Workout plan not found" });
+    }
+    
+    res.status(200).json(plan);
+  } catch (err) {
+    console.error("Error fetching workout plan:", err);
+    res.status(500).json({ error: "Failed to fetch workout plan" });
+  }
+};
+
+// @desc    Update workout plan
+// @route   PUT /api/workoutPlans/:id
+// @access  Private
+const updateWorkoutPlan = async (req, res) => {
+  try {
+    const { 
+      goal, 
+      planName, 
+      description, 
+      difficulty, 
+      totalDuration, 
+      tags, 
+      videoPreview 
+    } = req.body;
+
+    const updateData = {
+      goal,
+      planName,
+      description,
+      difficulty,
+      totalDuration,
+      tags: tags ? tags.split(",") : [],
+      videoPreview,
+      updatedAt: new Date()
+    };
+
+    if (req.file) {
+      updateData.image = req.file.path;
+    }
+
+    const updatedPlan = await WorkoutPlan.findOneAndUpdate(
+      { _id: req.params.id, creatorId: req.user.id },
+      updateData,
+      { new: true }
+    );
+
+    if (!updatedPlan) {
+      return res.status(404).json({ error: "Workout plan not found" });
+    }
+
+    res.status(200).json(updatedPlan);
+  } catch (err) {
+    console.error("Error updating workout plan:", err);
+    res.status(500).json({ error: "Failed to update workout plan" });
+  }
+};
+
+// @desc    Delete workout plan
+// @route   DELETE /api/workoutPlans/:id
+// @access  Private
+const deleteWorkoutPlan = async (req, res) => {
+  try {
+    const deletedPlan = await WorkoutPlan.findOneAndDelete({
+      _id: req.params.id,
+      creatorId: req.user.id
+    });
+
+    if (!deletedPlan) {
+      return res.status(404).json({ error: "Workout plan not found" });
+    }
+
+    res.status(200).json({ message: "Workout plan deleted successfully" });
+  } catch (err) {
+    console.error("Error deleting workout plan:", err);
+    res.status(500).json({ error: "Failed to delete workout plan" });
+  }
+};
+
+
 
 module.exports = {
   createWorkoutPlan,
   addExercisesToDay,
   editExerciseInDay,
   deleteExerciseFromDay,
+  getWorkoutPlans,
+  getWorkoutPlanById,
+  updateWorkoutPlan,
+  deleteWorkoutPlan
 };

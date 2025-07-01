@@ -32,10 +32,30 @@ fitnessExperience: {
   required: true,
   lowercase: true,
 },
-
-  },
-  { timestamps: true }
-);
+purchasedPlans: [{ 
+    type: mongoose.Schema.Types.ObjectId, 
+    ref: 'WorkoutPlan',
+    purchasedAt: { type: Date, default: Date.now },
+    progress: { type: Number, default: 0 }
+  }],
+  purchasedDietPlans: [{ 
+    planId: { type: mongoose.Schema.Types.ObjectId, ref: 'DietPlan' },
+    purchasedAt: { type: Date, default: Date.now },
+    progress: { type: Number, default: 0 },
+    currentWeek: { type: Number, default: 1 }
+  }],
+  viewedPlans: [{ 
+    type: mongoose.Schema.Types.ObjectId, 
+    ref: 'WorkoutPlan',
+    viewedAt: { type: Date, default: Date.now }
+  }],
+  viewedDietPlans: [{ 
+    type: mongoose.Schema.Types.ObjectId, 
+    ref: 'DietPlan',
+    viewedAt: { type: Date, default: Date.now }
+  }],
+    createdAt: { type: Date, default: Date.now }
+});
 
 const User = mongoose.model("User", userSchema);
 module.exports = User;

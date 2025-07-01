@@ -5,8 +5,9 @@ const connectDB = require("./config/db");
 const userRoutes = require("./routes/userRoutes");
 
 const creatorRoutes = require("./routes/creatorAuth");
-const nutritionRoutes = require("./routes/nutritionRoutes");
+
 const workoutPlanRoutes = require("./routes/workoutPlanRoutes.js");
+const dietPlanRoutes = require("./routes/dietPlanRoutes.js");
 
 
 
@@ -22,10 +23,11 @@ app.use(express.json());
 app.use("/api/users", userRoutes);
 
 
-app.use("/api/nutrition", nutritionRoutes);
-app.use("/api/diet", require("./routes/dietRoutes"));
+
 app.use("/api/creator", creatorRoutes);
 app.use("/api/workoutPlans", workoutPlanRoutes);
+app.use("/api/dietPlans", dietPlanRoutes);
+
 
 
 

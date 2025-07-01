@@ -135,15 +135,13 @@ const loginUser = async (req, res) => {
 // });
 
 const getUserProfile = asyncHandler(async (req, res) => {
-    console.log("User from Token:", req.user); // Debugging Line
-  
-    const user = await User.findById(req.user._id); // ✅ Correct user lookup
+    // The user should now be properly attached by the protect middleware
+    const user = await User.findById(req.user._id).select("-password");
+    
     if (!user) {
       res.status(404);
       throw new Error("User not found");
     }
-  
-    console.log("Fetched User Data:", user); // Debugging Line
   
     res.json({
       _id: user._id,
