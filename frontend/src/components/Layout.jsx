@@ -15,7 +15,7 @@ const Layout = () => {
       <Sidebar isOpen={isOpen} toggleSidebar={toggleSidebar} />
       
       {/* Main content with proper spacing */}
-      <div className={`flex-1 transition-all ${isOpen ? "ml-64" : "ml-20"} p-6`}>
+      <div className={`flex-1 transition-all ${isOpen ? "ml-72" : "ml-16"}`}>
         <Outlet />  {/* This renders the page content */}
       </div>
     </div>

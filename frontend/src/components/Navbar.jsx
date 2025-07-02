@@ -1,250 +1,281 @@
 import { useState, useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 
 const Navbar = () => {
   const [scrolled, setScrolled] = useState(false);
   const [hoverItem, setHoverItem] = useState(null);
+  const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
   const navRef = useRef(null);
 
-  // Handle scroll effect
-  useEffect(() => {
-    const handleScroll = () => {
-      setScrolled(window.scrollY > 50);
-    };
-    window.addEventListener("scroll", handleScroll);
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
+ 
 
-  // Mouse position tracker for glow effect
-  const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
-  useEffect(() => {
-    const handleMouseMove = (e) => {
-      if (navRef.current) {
-        const rect = navRef.current.getBoundingClientRect();
-        setMousePosition({
-          x: e.clientX - rect.left,
-          y: e.clientY - rect.top
-        });
-      }
-    };
-    window.addEventListener("mousemove", handleMouseMove);
-    return () => window.removeEventListener("mousemove", handleMouseMove);
-  }, []);
-
-  // Navigation items
+  
   const navItems = [
-    { name: "Our Services", path: "/services" },
-    { name: "Contact Us", path: "/contact" },
-    { name: "Login", path: "/select-role", isButton: true }
+    { name: "Services", path: "/services", icon: "⚡" },
+    { name: "About", path: "/about", icon: "🚀" },
+    { name: "Contact", path: "/contact", icon: "💬" },
+    { name: "Get Started", path: "/select-role", isButton: true, icon: "✨" }
   ];
 
   return (
-    <motion.nav
-      ref={navRef}
-      initial={{ opacity: 0, y: -50 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.8, ease: "easeOut" }}
-      className={`fixed top-0 left-0 w-full flex justify-between items-center p-5 z-50 transition-all duration-500 backdrop-blur-md ${
-        scrolled 
-          ? "bg-black/90 shadow-lg shadow-cyan-500/20 border-b border-cyan-500/30" 
-          : "bg-gradient-to-r from-black/50 via-black/60 to-black/50"
-      }`}
-    >
-      {/* Animated background glow */}
-      <div 
-        className="absolute inset-0 overflow-hidden"
-        style={{
-          opacity: scrolled ? 0.9 : 0.5,
-          transition: "opacity 0.5s ease"
+    <>
+      {/* Floating Navigation Container */}
+      <motion.div
+        ref={navRef}
+        initial={{ opacity: 0, y: -100, scale: 0.9 }}
+        animate={{ 
+          opacity: 1, 
+          y: scrolled ? 15 : 25, 
+          scale: scrolled ? 0.98 : 1 
         }}
+        transition={{ 
+          duration: 0.6, 
+          ease: [0.25, 0.46, 0.45, 0.94],
+          type: "spring",
+          stiffness: 200,
+          damping: 25
+        }}
+        className="fixed top-0 left-1/2 transform -translate-x-1/2 z-50 w-[95%] max-w-6xl"
       >
-        {/* Animated gradient background */}
-        <div className="absolute inset-0 bg-gradient-to-br from-cyan-900/30 via-black/5 to-cyan-800/20 animate-pulse-slow"></div>
-        
-        {/* Moving glow effect that follows cursor */}
-        <div 
-          className="absolute w-64 h-64 rounded-full pointer-events-none"
-          style={{
-            background: "radial-gradient(circle, rgba(6,182,212,0.15) 0%, rgba(0,0,0,0) 70%)",
-            left: `${mousePosition.x - 128}px`,
-            top: `${mousePosition.y - 128}px`,
-            transition: "left 0.3s ease-out, top 0.3s ease-out"
-          }}
-        ></div>
-        
-        {/* Subtle floating particles */}
-        {[...Array(6)].map((_, i) => (
-          <motion.div
-            key={i}
-            className="absolute w-2 h-2 bg-cyan-500/20 rounded-full"
-            initial={{ 
-              x: Math.random() * 100 + "%", 
-              y: Math.random() * 100 + "%", 
-              opacity: Math.random() * 0.5 + 0.2 
-            }}
-            animate={{ 
-              y: ["-10%", "110%"],
-              opacity: [0.1, 0.6, 0.1]
-            }}
-            transition={{ 
-              repeat: Infinity, 
-              duration: Math.random() * 10 + 15,
-              ease: "linear",
-              delay: Math.random() * 5
-            }}
-          />
-        ))}
-      </div>
-
-      {/* Logo with weightlifter icon and enhanced animations */}
-      <div className="flex items-center relative z-10">
-        <motion.div 
-          whileHover={{ scale: 1.1 }}
-          transition={{ type: "spring", stiffness: 300, damping: 10 }}
-          className="mr-3 relative"
+        {/* Main Navbar */}
+        <motion.nav
+          className={`relative overflow-hidden rounded-2xl backdrop-blur-2xl transition-all duration-700 ${
+            scrolled 
+              ? "bg-gradient-to-r from-gray-900/95 via-black/90 to-gray-900/95 shadow-2xl shadow-purple-500/25 border border-white/10" 
+              : "bg-gradient-to-br from-slate-900/80 via-gray-900/85 to-black/90 shadow-xl shadow-blue-500/20 border border-white/5"
+          }`}
         >
-          <motion.div
-            animate={{ scale: [1, 1.05, 1] }}
-            transition={{ 
-              duration: 3, 
-              repeat: Infinity,
-              ease: "easeInOut" 
-            }}
-            className="absolute inset-0 text-cyan-400/30 -z-10 blur-sm"
-          >
-            {/* Weightlifter SVG Icon Background Glow */}
-            <svg className="w-12 h-12" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M12 5c-1.11 0-2 .89-2 2s.89 2 2 2 2-.89 2-2-.89-2-2-2zm10-4v5h-2V4H4v2H2V1h2v2h16V1h2zm-7 10.26V23h-2v-5h-2v5H9V11.26C6.93 10.17 5.5 8 5.5 5.5V5h2v.5C7.5 8 9.5 10 12 10s4.5-2 4.5-4.5V5h2v.5c0 2.5-1.43 4.67-3.5 5.76z"/>
-            </svg>
-          </motion.div>
-          {/* Weightlifter SVG Icon Main */}
-          <svg className="w-12 h-12 text-cyan-400 drop-shadow-[0_0_8px_rgba(6,182,212,0.8)]" viewBox="0 0 24 24" fill="currentColor">
-            <path d="M12 5c-1.11 0-2 .89-2 2s.89 2 2 2 2-.89 2-2-.89-2-2-2zm10-4v5h-2V4H4v2H2V1h2v2h16V1h2zm-7 10.26V23h-2v-5h-2v5H9V11.26C6.93 10.17 5.5 8 5.5 5.5V5h2v.5C7.5 8 9.5 10 12 10s4.5-2 4.5-4.5V5h2v.5c0 2.5-1.43 4.67-3.5 5.76z"/>
-          </svg>
-        </motion.div>
-        <div className="relative">
-          <motion.h1 
-            className="text-white text-3xl font-bold tracking-wide relative z-10"
-            whileHover={{ scale: 1.05 }}
-            transition={{ type: "spring", stiffness: 400, damping: 10 }}
-          >
-            <span className="relative">
-              Fit
-              <motion.span 
-                className="absolute -inset-1 rounded bg-gradient-to-r from-cyan-500/20 to-transparent blur-lg"
-                animate={{ opacity: [0.5, 0.8, 0.5] }}
-                transition={{ duration: 3, repeat: Infinity }}
-              />
-            </span>
-            <span className="bg-gradient-to-br from-cyan-300 to-cyan-500 bg-clip-text text-transparent drop-shadow-[0_0_10px_rgba(6,182,212,0.7)]">Sync</span>
-          </motion.h1>
-          <motion.div 
-            className="absolute -bottom-1 left-0 h-1 bg-gradient-to-r from-cyan-400 to-transparent w-0"
-            animate={{ width: ["0%", "100%", "0%"] }}
-            transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
-          />
-        </div>
-      </div>
+          {/* Animated Background Effects */}
+          <div className="absolute inset-0 overflow-hidden">
+            {/* Primary gradient overlay */}
+            <motion.div 
+              className="absolute inset-0"
+              animate={{
+                background: [
+                  "linear-gradient(45deg, rgba(168,85,247,0.1) 0%, rgba(59,130,246,0.1) 50%, rgba(236,72,153,0.1) 100%)",
+                  "linear-gradient(135deg, rgba(59,130,246,0.1) 0%, rgba(236,72,153,0.1) 50%, rgba(168,85,247,0.1) 100%)",
+                  "linear-gradient(225deg, rgba(236,72,153,0.1) 0%, rgba(168,85,247,0.1) 50%, rgba(59,130,246,0.1) 100%)",
+                  "linear-gradient(315deg, rgba(168,85,247,0.1) 0%, rgba(59,130,246,0.1) 50%, rgba(236,72,153,0.1) 100%)"
+                ]
+              }}
+              transition={{ duration: 8, repeat: Infinity, ease: "linear" }}
+            />
+            
+            {/* Interactive cursor glow */}
+            <motion.div
+              className="absolute w-96 h-96 rounded-full pointer-events-none"
+              style={{
+                background: "radial-gradient(circle, rgba(168,85,247,0.15) 0%, rgba(59,130,246,0.1) 40%, transparent 70%)",
+                left: `${mousePosition.x - 192}px`,
+                top: `${mousePosition.y - 192}px`,
+                filter: "blur(40px)"
+              }}
+              animate={{
+                scale: [1, 1.2, 1],
+                opacity: [0.3, 0.6, 0.3]
+              }}
+              transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+            />
 
-      {/* Menu Links with enhanced hover effects */}
-      <ul className="flex items-center space-x-6 relative z-10">
-        {navItems.map((item, index) => (
-          <motion.li 
-            key={index}
-            onHoverStart={() => setHoverItem(index)}
-            onHoverEnd={() => setHoverItem(null)}
-            className="relative"
-          >
-            {item.isButton ? (
+            {/* Floating orbs */}
+            {[...Array(5)].map((_, i) => (
               <motion.div
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
+                key={i}
+                className="absolute rounded-full"
+                style={{
+                  width: Math.random() * 6 + 4,
+                  height: Math.random() * 6 + 4,
+                  background: `linear-gradient(45deg, rgb(168,85,247), rgb(59,130,246), rgb(236,72,153))`,
+                  left: `${Math.random() * 100}%`,
+                  top: `${Math.random() * 100}%`,
+                }}
+                animate={{
+                  x: [0, Math.random() * 100 - 50],
+                  y: [0, Math.random() * 50 - 25],
+                  opacity: [0.2, 0.8, 0.2],
+                  scale: [1, 1.5, 1]
+                }}
+                transition={{
+                  duration: Math.random() * 8 + 6,
+                  repeat: Infinity,
+                  ease: "easeInOut",
+                  delay: Math.random() * 3
+                }}
+              />
+            ))}
+          </div>
+
+          {/* Content Container */}
+          <div className="relative z-10 flex justify-between items-center px-8 py-4">
+            {/* Logo Section */}
+            <motion.div 
+              className="flex items-center space-x-3"
+              whileHover={{ scale: 1.05 }}
+              transition={{ type: "spring", stiffness: 400, damping: 25 }}
+            >
+              {/* Animated Logo Icon */}
+              <motion.div
+                className="relative w-12 h-12 rounded-xl bg-gradient-to-br from-purple-500 via-blue-500 to-pink-500 p-0.5"
+                whileHover={{ rotate: 180 }}
+                transition={{ duration: 0.6, ease: "easeInOut" }}
               >
-                <Link
-                  to={item.path}
-                  className="relative overflow-hidden group flex items-center justify-center"
-                >
-                  {/* Button background with animated gradient */}
-                  <motion.div 
-                    className="absolute inset-0 rounded-full bg-gradient-to-r from-cyan-600 to-cyan-400"
-                    animate={{ 
-                      background: [
-                        "linear-gradient(90deg, rgb(8, 145, 178) 0%, rgb(6, 182, 212) 100%)",
-                        "linear-gradient(180deg, rgb(8, 145, 178) 0%, rgb(6, 182, 212) 100%)",
-                        "linear-gradient(270deg, rgb(8, 145, 178) 0%, rgb(6, 182, 212) 100%)",
-                        "linear-gradient(360deg, rgb(8, 145, 178) 0%, rgb(6, 182, 212) 100%)",
-                      ]
-                    }}
-                    transition={{ duration: 8, repeat: Infinity, ease: "linear" }}
-                  />
-                  
-                  {/* Shine effect */}
-                  <motion.div
-                    className="absolute inset-0 rounded-full opacity-0 group-hover:opacity-100 bg-gradient-to-r from-transparent via-white/20 to-transparent"
-                    animate={{ x: ["-100%", "100%"], opacity: [0, 1, 0] }}
-                    transition={{ duration: 1.5, ease: "easeInOut", repeat: Infinity, repeatDelay: 1 }}
-                  />
-                  
-                  {/* Button text */}
-                  <span className="relative z-10 px-6 py-2 text-white font-medium">
-                    {item.name}
-                  </span>
-                  
-                  {/* Subtle glow effect */}
-                  <motion.div
-                    className="absolute inset-0 rounded-full opacity-0 group-hover:opacity-100 -z-10"
-                    initial={{ boxShadow: "0 0 0 rgba(6, 182, 212, 0)" }}
-                    animate={{ boxShadow: "0 0 20px rgba(6, 182, 212, 0.7)" }}
-                    transition={{ duration: 1, ease: "easeOut" }}
-                  />
-                </Link>
-              </motion.div>
-            ) : (
-              <Link
-                to={item.path}
-                className="relative text-white hover:text-cyan-300 transition-all group"
-              >
-                <span className="relative">{item.name}</span>
-                
-                {/* Animated underline */}
+                <div className="w-full h-full rounded-xl bg-gray-900 flex items-center justify-center">
+                  <motion.span 
+                    className="text-2xl"
+                    animate={{ rotate: [0, 360] }}
+                    transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
+                  >
+                    ⚡
+                  </motion.span>
+                </div>
+                {/* Pulsing glow */}
                 <motion.div
-                  className="absolute left-0 bottom-0 h-0.5 w-0 bg-gradient-to-r from-cyan-500 to-cyan-300"
-                  initial={{ width: 0 }}
-                  animate={hoverItem === index ? { width: "100%" } : { width: 0 }}
-                  transition={{ duration: 0.3, ease: "easeInOut" }}
+                  className="absolute inset-0 rounded-xl bg-gradient-to-br from-purple-500 via-blue-500 to-pink-500 -z-10"
+                  animate={{ 
+                    scale: [1, 1.2, 1],
+                    opacity: [0.5, 0.8, 0.5]
+                  }}
+                  transition={{ duration: 3, repeat: Infinity }}
+                  style={{ filter: "blur(8px)" }}
                 />
-                
-                {/* Subtle text glow on hover */}
-                <motion.div
-                  className="absolute inset-0 opacity-0 blur-sm text-cyan-400 -z-10"
-                  initial={{ opacity: 0 }}
-                  animate={hoverItem === index ? { opacity: 0.7 } : { opacity: 0 }}
-                  transition={{ duration: 0.3 }}
+              </motion.div>
+
+              {/* Brand Name */}
+              <div>
+                <motion.h1 
+                  className="text-2xl font-bold bg-gradient-to-r from-white via-purple-200 to-blue-200 bg-clip-text text-transparent"
+                  whileHover={{ scale: 1.05 }}
                 >
-                  {item.name}
+                  FitSync
+                </motion.h1>
+                <motion.div
+                  className="h-0.5 bg-gradient-to-r from-purple-500 to-blue-500 rounded-full"
+                  initial={{ width: 0 }}
+                  animate={{ width: "100%" }}
+                  transition={{ duration: 2, delay: 0.5 }}
+                />
+              </div>
+            </motion.div>
+
+            {/* Navigation Menu */}
+            <div className="flex items-center space-x-2">
+              {navItems.map((item, index) => (
+                <motion.div
+                  key={index}
+                  onHoverStart={() => setHoverItem(index)}
+                  onHoverEnd={() => setHoverItem(null)}
+                  className="relative"
+                >
+                  {item.isButton ? (
+                    // CTA Button
+                    <motion.div
+                      whileHover={{ scale: 1.05, y: -2 }}
+                      whileTap={{ scale: 0.95 }}
+                    >
+                      <Link
+                        to={item.path}
+                        className="relative group overflow-hidden rounded-xl block"
+                      >
+                        {/* Button background with morphing gradient */}
+                        <motion.div
+                          className="absolute inset-0 bg-gradient-to-r from-purple-600 via-blue-600 to-pink-600"
+                          animate={{
+                            background: [
+                              "linear-gradient(90deg, rgb(147,51,234) 0%, rgb(37,99,235) 50%, rgb(219,39,119) 100%)",
+                              "linear-gradient(180deg, rgb(37,99,235) 0%, rgb(219,39,119) 50%, rgb(147,51,234) 100%)",
+                              "linear-gradient(270deg, rgb(219,39,119) 0%, rgb(147,51,234) 50%, rgb(37,99,235) 100%)"
+                            ]
+                          }}
+                          transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+                        />
+                        
+                        {/* Shimmer effect */}
+                        <motion.div
+                          className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent -skew-x-12"
+                          initial={{ x: "-100%" }}
+                          animate={{ x: "200%" }}
+                          transition={{ 
+                            duration: 1.5, 
+                            repeat: Infinity, 
+                            repeatDelay: 2,
+                            ease: "easeInOut" 
+                          }}
+                        />
+                        
+                        <div className="relative z-10 flex items-center space-x-2 px-6 py-3">
+                          <span className="text-lg">{item.icon}</span>
+                          <span className="font-semibold text-white">{item.name}</span>
+                        </div>
+                        
+                        {/* Glow effect */}
+                        <motion.div
+                          className="absolute inset-0 rounded-xl opacity-0 group-hover:opacity-100 -z-10"
+                          style={{
+                            background: "linear-gradient(90deg, rgb(147,51,234), rgb(37,99,235), rgb(219,39,119))",
+                            filter: "blur(20px)"
+                          }}
+                          animate={{ 
+                            scale: [1, 1.1, 1],
+                          }}
+                          transition={{ duration: 2, repeat: Infinity }}
+                        />
+                      </Link>
+                    </motion.div>
+                  ) : (
+                    // Regular nav items
+                    <Link
+                      to={item.path}
+                      className="relative group flex items-center space-x-2 px-4 py-2 rounded-lg transition-all"
+                    >
+                      {/* Hover background */}
+                      <motion.div
+                        className="absolute inset-0 rounded-lg bg-gradient-to-r from-white/5 to-white/10 opacity-0"
+                        initial={{ opacity: 0, scale: 0.8 }}
+                        animate={
+                          hoverItem === index 
+                            ? { opacity: 1, scale: 1 } 
+                            : { opacity: 0, scale: 0.8 }
+                        }
+                        transition={{ duration: 0.2 }}
+                      />
+                      
+                      <span className="text-lg relative z-10">{item.icon}</span>
+                      <span className="font-medium text-gray-200 group-hover:text-white relative z-10 transition-colors">
+                        {item.name}
+                      </span>
+                      
+                      {/* Active indicator */}
+                      <motion.div
+                        className="absolute bottom-0 left-1/2 w-0 h-0.5 bg-gradient-to-r from-purple-500 to-blue-500 rounded-full"
+                        initial={{ width: 0, x: "-50%" }}
+                        animate={
+                          hoverItem === index 
+                            ? { width: "80%" } 
+                            : { width: 0 }
+                        }
+                        transition={{ duration: 0.3, ease: "easeOut" }}
+                      />
+                    </Link>
+                  )}
                 </motion.div>
-              </Link>
-            )}
-          </motion.li>
-        ))}
-      </ul>
-      
-      {/* Extra glow for navbar when scrolled to ensure visibility */}
-      {scrolled && (
-        <div className="absolute inset-0 bg-gradient-to-b from-black to-transparent -z-20"></div>
-      )}
-    </motion.nav>
+              ))}
+            </div>
+          </div>
+        </motion.nav>
+
+        {/* Subtle bottom glow */}
+        <motion.div
+          className="absolute -bottom-4 left-1/2 transform -translate-x-1/2 w-3/4 h-2 bg-gradient-to-r from-transparent via-purple-500/20 to-transparent rounded-full blur-sm"
+          animate={{ 
+            opacity: scrolled ? 0.6 : 0.3,
+            scale: scrolled ? 1.1 : 1
+          }}
+          transition={{ duration: 0.5 }}
+        />
+      </motion.div>
+    </>
   );
 };
-
-// Add this to your global CSS or tailwind.config.js
-// @keyframes pulse-slow {
-//   0%, 100% { opacity: 1; }
-//   50% { opacity: 0.7; }
-// }
-// .animate-pulse-slow {
-//   animation: pulse-slow 8s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-// }
 
 export default Navbar;

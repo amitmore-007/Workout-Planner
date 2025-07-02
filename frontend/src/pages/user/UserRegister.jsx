@@ -105,7 +105,7 @@ const Register = () => {
       );
   
       alert("Registration successful!");
-      navigate("/"); 
+      navigate("/user-login"); 
     } catch (error) {
       setError(error.response?.data?.message || "Registration failed. Try again.");
     } finally {
@@ -347,7 +347,7 @@ const Register = () => {
             
             <p className="text-center mt-6 text-white/70">
               Already have an account?{" "}
-              <Link to="/login" className="text-green-400 font-semibold hover:underline transition-all duration-300">
+              <Link to="/user-login" className="text-green-400 font-semibold hover:underline transition-all duration-300">
                 Sign In
               </Link>
             </p>
