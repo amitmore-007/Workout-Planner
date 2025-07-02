@@ -9,33 +9,41 @@ const protect = asyncHandler(async (req, res, next) => {
   if (req.headers.authorization?.startsWith("Bearer")) {
     try {
       token = req.headers.authorization.split(" ")[1];
+      console.log('Protect middleware - token received:', token ? 'Present' : 'Missing');
+      
       const decoded = jwt.verify(token, process.env.JWT_SECRET);
+      console.log('Protect middleware - decoded token:', decoded);
 
-      console.log('Decoded token:', decoded); // Debug log
-
-      // Extract user ID from token - handle the actual token structure
+      // Extract user ID from token - handle different token structures
       let userId;
       if (decoded.id) {
         userId = decoded.id;
       } else if (decoded._id) {
         userId = decoded._id;
+      } else if (decoded.userId) {
+        userId = decoded.userId;
       } else {
+        console.error("Invalid token structure:", decoded);
         return res.status(401).json({ message: "Invalid token structure" });
       }
+
+      console.log('Protect middleware - looking for user ID:', userId);
 
       req.user = await User.findById(userId).select("-password");
 
       if (!req.user) {
+        console.log('Protect middleware - user not found for ID:', userId);
         return res.status(401).json({ message: "Not authorized, user not found" });
       }
 
-      console.log('User found:', req.user.name); // Debug log
+      console.log('Protect middleware - user authenticated:', req.user.name);
       next();
     } catch (error) {
       console.error("Authentication error:", error);
       res.status(401).json({ message: "Not authorized, token failed" });
     }
   } else {
+    console.log('Protect middleware - no authorization header');
     res.status(401).json({ message: "Not authorized, no token" });
   }
 });
@@ -101,23 +109,32 @@ const optionalProtect = asyncHandler(async (req, res, next) => {
   if (req.headers.authorization?.startsWith("Bearer")) {
     try {
       token = req.headers.authorization.split(" ")[1];
+      console.log('Optional protect - token received:', token ? 'Present' : 'Missing');
+      
       const decoded = jwt.verify(token, process.env.JWT_SECRET);
+      console.log('Optional protect - decoded token:', decoded);
 
-      // Extract user ID from token
+      // Extract user ID from token - handle different token structures
       let userId;
       if (decoded.id) {
         userId = decoded.id;
       } else if (decoded._id) {
         userId = decoded._id;
+      } else if (decoded.userId) {
+        userId = decoded.userId;
       }
 
       if (userId) {
         req.user = await User.findById(userId).select("-password");
+        console.log('Optional protect - user found:', req.user ? req.user.name : 'Not found');
       }
     } catch (error) {
+      console.log('Optional protect - token verification failed:', error.message);
       // Continue without user if token is invalid
       req.user = null;
     }
+  } else {
+    console.log('Optional protect - no authorization header');
   }
 
   next();

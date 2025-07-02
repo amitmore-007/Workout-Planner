@@ -10,16 +10,99 @@ const UserDietPlan = () => {
   const [showPurchaseModal, setShowPurchaseModal] = useState(false);
   const [planToPurchase, setPlanToPurchase] = useState(null);
   const [paymentProcessing, setPaymentProcessing] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [filters, setFilters] = useState({
     category: '',
     difficulty: '',
     planType: ''
   });
 
+  const checkAuthStatus = () => {
+    const token = localStorage.getItem('userToken') || localStorage.getItem('token');
+    const userInfo = localStorage.getItem('userInfo');
+    
+    console.log('=== Auth Status Check ===');
+    console.log('userToken:', localStorage.getItem('userToken'));
+    console.log('token:', localStorage.getItem('token'));
+    console.log('userInfo:', userInfo);
+    console.log('All localStorage keys:', Object.keys(localStorage));
+    console.log('========================');
+    
+    const loggedIn = !!token;
+    setIsLoggedIn(loggedIn);
+    console.log('Auth status set to:', loggedIn);
+    return loggedIn;
+  };
+
   useEffect(() => {
+    console.log('Component mounted, checking auth status...');
+    
+    // Debug: Log all localStorage contents
+    console.log('=== localStorage Debug ===');
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      const value = localStorage.getItem(key);
+      console.log(`${key}: ${value}`);
+    }
+    console.log('========================');
+    
+    const isAuthenticated = checkAuthStatus();
     fetchPublishedPlans();
-    fetchUserPurchases();
+    if (isAuthenticated) {
+      fetchUserPurchases();
+    }
+
+    const handleStorageChange = (e) => {
+      console.log('Storage change detected:', e.key);
+      if (e.key === 'userToken' || e.key === 'token') {
+        const newAuthStatus = checkAuthStatus();
+        if (newAuthStatus) {
+          fetchUserPurchases();
+        } else {
+          setPurchasedPlans(new Set());
+        }
+      }
+    };
+
+    // Also check for auth status changes when component becomes visible
+    const handleVisibilityChange = () => {
+      if (!document.hidden) {
+        const currentAuthStatus = checkAuthStatus();
+        if (currentAuthStatus && !isLoggedIn) {
+          fetchUserPurchases();
+        }
+      }
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
   }, []);
+
+  // Add a separate useEffect to check auth status periodically
+  useEffect(() => {
+    const interval = setInterval(() => {
+      const currentToken = localStorage.getItem('userToken') || localStorage.getItem('token');
+      const currentAuthStatus = !!currentToken;
+      
+      if (currentAuthStatus !== isLoggedIn) {
+        console.log('Auth status changed from', isLoggedIn, 'to', currentAuthStatus);
+        setIsLoggedIn(currentAuthStatus);
+        
+        if (currentAuthStatus) {
+          fetchUserPurchases();
+        } else {
+          setPurchasedPlans(new Set());
+        }
+      }
+    }, 1000); // Check every second
+
+    return () => clearInterval(interval);
+  }, [isLoggedIn]);
 
   const fetchPublishedPlans = async () => {
     try {
@@ -28,17 +111,24 @@ const UserDietPlan = () => {
       if (filters.difficulty) queryParams.append('difficulty', filters.difficulty);
       if (filters.planType) queryParams.append('planType', filters.planType);
 
-      const response = await fetch(`http://localhost:5000/api/dietPlans/public?${queryParams}`, {
-        headers: {
-          'Authorization': localStorage.getItem('userToken') ? `Bearer ${localStorage.getItem('userToken')}` : ''
-        }
-      });
+      const token = localStorage.getItem('userToken') || localStorage.getItem('token');
+      const headers = {
+        'Content-Type': 'application/json'
+      };
+      
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
 
+      const response = await fetch(`http://localhost:5000/api/dietPlans/public?${queryParams}`, {
+        headers
+      });
+      
       if (response.ok) {
         const data = await response.json();
         setDietPlans(data);
       } else {
-        console.error('Failed to fetch diet plans');
+        console.error('Failed to fetch diet plans:', response.status);
       }
     } catch (error) {
       console.error('Error fetching diet plans:', error);
@@ -48,50 +138,74 @@ const UserDietPlan = () => {
   };
 
   const fetchUserPurchases = async () => {
-    const token = localStorage.getItem('userToken');
-    if (!token) return;
-
-    try {
-      const response = await fetch('http://localhost:5000/api/users/profile', {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-
-      if (response.ok) {
-        const userData = await response.json();
-        const purchased = new Set(userData.purchasedDietPlans?.map(p => p.planId) || []);
-        setPurchasedPlans(purchased);
-      }
-    } catch (error) {
-      console.error('Error fetching user purchases:', error);
-    }
-  };
-
-  const handlePurchaseClick = (plan) => {
-    const token = localStorage.getItem('userToken');
+    const token = localStorage.getItem('userToken') || localStorage.getItem('token');
+    
     if (!token) {
-      alert('Please login to purchase diet plans');
+      console.log('No token found for fetching purchases');
+      setIsLoggedIn(false);
       return;
     }
-    setPlanToPurchase(plan);
-    setShowPurchaseModal(true);
-  };
 
-  const handlePurchase = async () => {
-    setPaymentProcessing(true);
-    
     try {
-      const token = localStorage.getItem('userToken');
-      const response = await fetch(`http://localhost:5000/api/dietPlans/${planToPurchase._id}/purchase`, {
-        method: 'POST',
+      console.log('Fetching user purchases with token...');
+      console.log('Token being used:', token.substring(0, 20) + '...');
+      
+      const response = await fetch('http://localhost:5000/api/users/profile', {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
         }
       });
 
+      console.log('Profile response status:', response.status);
+
       if (response.ok) {
+        const userData = await response.json();
+        console.log('User data received:', userData);
+        
+        const purchased = new Set(userData.purchasedDietPlans?.map(p => p.planId) || []);
+        setPurchasedPlans(purchased);
+        setIsLoggedIn(true);
+        console.log('User profile fetched successfully, purchased plans:', purchased.size);
+      } else {
+        const errorData = await response.json().catch(() => ({}));
+        console.error('Failed to fetch user profile, status:', response.status, 'Error:', errorData);
+        
+        if (response.status === 401) {
+          localStorage.removeItem('userToken');
+          localStorage.removeItem('token');
+          setIsLoggedIn(false);
+          console.log('Invalid token, logged out user');
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching user purchases:', error);
+      setIsLoggedIn(false);
+    }
+  };
+
+  const handlePurchase = async () => {
+    setPaymentProcessing(true);
+    
+    try {
+      const token = localStorage.getItem('userToken') || localStorage.getItem('token');
+      
+      const headers = {
+        'Content-Type': 'application/json'
+      };
+      
+      // Add auth header if token exists
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+
+      const response = await fetch(`http://localhost:5000/api/dietPlans/${planToPurchase._id}/purchase`, {
+        method: 'POST',
+        headers
+      });
+
+      if (response.ok) {
+        const result = await response.json();
         setPurchasedPlans(new Set([...purchasedPlans, planToPurchase._id]));
         setPaymentProcessing(false);
         setShowPurchaseModal(false);
@@ -99,25 +213,46 @@ const UserDietPlan = () => {
         setShowModal(true);
         setPlanToPurchase(null);
         alert('Diet plan purchased successfully!');
+        
+        // Refresh user purchases to ensure state is updated
+        if (token) {
+          await fetchUserPurchases();
+        }
       } else {
         const error = await response.json();
-        alert(error.message || 'Failed to purchase diet plan');
-        setPaymentProcessing(false);
+        
+        // Handle authentication error specifically
+        if (response.status === 401) {
+          setPaymentProcessing(false);
+          setShowPurchaseModal(false);
+          alert('Please log in to purchase this plan. You will be redirected to login.');
+          // You can redirect to login page here if needed
+          // window.location.href = '/login';
+        } else {
+          alert(error.message || 'Failed to purchase diet plan');
+          setPaymentProcessing(false);
+        }
       }
     } catch (error) {
       console.error('Error purchasing diet plan:', error);
-      alert('Failed to purchase diet plan');
+      alert('Failed to purchase diet plan. Please try again.');
       setPaymentProcessing(false);
     }
   };
 
   const openPlanDetails = async (plan) => {
     try {
-      const token = localStorage.getItem('userToken');
+      const token = localStorage.getItem('userToken') || localStorage.getItem('token');
+      const headers = {
+        'Content-Type': 'application/json'
+      };
+      
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+
       const response = await fetch(`http://localhost:5000/api/dietPlans/public/${plan._id}`, {
-        headers: {
-          'Authorization': token ? `Bearer ${token}` : ''
-        }
+        headers
       });
 
       if (response.ok) {
@@ -125,10 +260,11 @@ const UserDietPlan = () => {
         setSelectedPlan(detailedPlan);
         setShowModal(true);
       } else {
-        console.error('Failed to fetch plan details');
+        alert('Failed to load plan details');
       }
     } catch (error) {
       console.error('Error fetching plan details:', error);
+      alert('Failed to load plan details');
     }
   };
 
@@ -139,6 +275,58 @@ const UserDietPlan = () => {
   useEffect(() => {
     fetchPublishedPlans();
   }, [filters]);
+
+  const handlePurchaseClick = (plan) => {
+    console.log('=== Purchase Click Debug ===');
+    console.log('isLoggedIn state:', isLoggedIn);
+    console.log('userToken in localStorage:', localStorage.getItem('userToken'));
+    console.log('token in localStorage:', localStorage.getItem('token'));
+    console.log('userInfo in localStorage:', localStorage.getItem('userInfo'));
+    
+    const token = localStorage.getItem('userToken') || localStorage.getItem('token');
+    
+    if (!token) {
+      console.log('No token found, user needs to login');
+      alert('Please log in to purchase this plan. Redirecting to login...');
+      // Redirect to login or open login modal
+      window.location.href = '/user-login';
+      return;
+    }
+    
+    console.log('Token found, proceeding with purchase');
+    setPlanToPurchase(plan);
+    setShowPurchaseModal(true);
+  };
+
+  // Add a test function to manually verify login
+  const testLogin = async () => {
+    try {
+      console.log('=== Testing Login ===');
+      const response = await fetch("http://localhost:5000/api/users/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ 
+          email: "test@example.com", // Replace with a test email
+          password: "password123" // Replace with test password
+        }),
+      });
+
+      const data = await response.json();
+      console.log('Login response:', data);
+
+      if (response.ok) {
+        localStorage.setItem("token", data.token);
+        localStorage.setItem("userToken", data.token);
+        localStorage.setItem("userInfo", JSON.stringify(data));
+        
+        console.log('Tokens stored, checking again...');
+        checkAuthStatus();
+        fetchUserPurchases();
+      }
+    } catch (error) {
+      console.error('Test login error:', error);
+    }
+  };
 
   if (loading) {
     return (
@@ -153,6 +341,29 @@ const UserDietPlan = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-purple-900 to-black text-white">
+      {/* Debug Panel - Remove in production */}
+      <div className="fixed top-4 right-4 bg-black/80 text-white p-4 rounded-lg text-xs z-50">
+        <div>Auth Status: {isLoggedIn ? 'Logged In' : 'Not Logged In'}</div>
+        <div>Token: {(localStorage.getItem('userToken') || localStorage.getItem('token')) ? 'Present' : 'Missing'}</div>
+        <button 
+          onClick={testLogin}
+          className="mt-2 px-2 py-1 bg-blue-600 rounded text-xs"
+        >
+          Test Login
+        </button>
+        <button 
+          onClick={() => {
+            localStorage.clear();
+            setIsLoggedIn(false);
+            setPurchasedPlans(new Set());
+            console.log('localStorage cleared');
+          }}
+          className="mt-2 ml-2 px-2 py-1 bg-red-600 rounded text-xs"
+        >
+          Clear Storage
+        </button>
+      </div>
+
       {/* Hero Section */}
       <div className="relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-r from-purple-800/20 to-pink-800/20"></div>
@@ -352,18 +563,37 @@ const UserDietPlan = () => {
                   ) : (
                     <button
                       onClick={() => handlePurchaseClick(plan)}
-                      className="flex items-center px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 rounded-lg font-medium transition-all duration-300 transform hover:scale-105"
+                      disabled={paymentProcessing}
+                      className="flex items-center px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 disabled:from-gray-600 disabled:to-gray-600 disabled:cursor-not-allowed rounded-lg font-medium transition-all duration-300 transform hover:scale-105 disabled:scale-100"
                     >
-                      Get Access
-                      <ArrowRight className="w-4 h-4 ml-2" />
+                      {paymentProcessing ? (
+                        <>
+                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                          Processing...
+                        </>
+                      ) : (
+                        <>
+                          Get Access
+                          <ArrowRight className="w-4 h-4 ml-2" />
+                        </>
+                      )}
                     </button>
                   )}
                 </div>
 
-                {(purchasedPlans.has(plan._id) || plan.planType === 'regular') && (
+                {/* Ownership Badge */}
+                {purchasedPlans.has(plan._id) && (
                   <div className="absolute top-4 right-4">
                     <div className="bg-green-500 text-white px-3 py-1 rounded-full text-sm font-medium">
-                      {plan.planType === 'regular' ? 'Free' : 'Owned'}
+                      Owned
+                    </div>
+                  </div>
+                )}
+                
+                {plan.planType === 'regular' && (
+                  <div className="absolute top-4 right-4">
+                    <div className="bg-blue-500 text-white px-3 py-1 rounded-full text-sm font-medium">
+                      Free
                     </div>
                   </div>
                 )}
@@ -397,6 +627,16 @@ const UserDietPlan = () => {
                   <X className="w-5 h-5 text-gray-400" />
                 </button>
               </div>
+
+              {/* Show login notice if not logged in */}
+              {!isLoggedIn && (
+                <div className="mb-6 p-4 bg-yellow-500/10 border border-yellow-500/20 rounded-lg">
+                  <div className="flex items-center text-sm text-yellow-300">
+                    <Shield className="w-4 h-4 mr-2" />
+                    You'll need to log in to complete this purchase
+                  </div>
+                </div>
+              )}
 
               <div className="bg-gradient-to-r from-purple-500/10 to-pink-500/10 border border-purple-500/20 rounded-xl p-6 mb-6">
                 <h4 className="text-lg font-bold text-white mb-2">{planToPurchase.name}</h4>
@@ -448,7 +688,7 @@ const UserDietPlan = () => {
                 ) : (
                   <>
                     <Zap className="w-5 h-5 mr-2" />
-                    Unlock Plan Now - ${planToPurchase.price}
+                    {isLoggedIn ? `Unlock Plan Now - $${planToPurchase.price}` : `Continue to Purchase - $${planToPurchase.price}`}
                   </>
                 )}
               </button>

@@ -3,7 +3,6 @@ import { Heart, Star, Play, Clock, Target, Users, Filter, ChevronRight, X, Credi
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 
-
 const UserWorkoutPlan = ({ userData }) => {
   const [plans, setPlans] = useState([]);
   const [filteredPlans, setFilteredPlans] = useState([]);
@@ -15,235 +14,17 @@ const UserWorkoutPlan = ({ userData }) => {
   const [purchasedPlans, setPurchasedPlans] = useState(new Set());
   const [showPlanContent, setShowPlanContent] = useState(false);
   const [paymentProcessing, setPaymentProcessing] = useState(false);
- const [userPreferences, setUserPreferences] = useState({
-  goals: [userData?.goal || 'General Fitness'],
-  fitnessLevel: userData?.fitnessExperience || 'Beginner',
-  timePerSession: 30,
-  daysPerWeek: 3
-});
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  
   const navigate = useNavigate();
-
-  // Sample workout plans data with pricing
-  const workoutPlansData = [
-    {
-      _id: "1",
-      creatorName: "Sarah Johnson",
-      goal: "Weight Loss",
-      planName: "Ultimate Fat Burning Challenge",
-      description: "A comprehensive 12-week program designed to maximize fat burning through a combination of HIIT, strength training, and cardio. Perfect for those looking to shed pounds and build lean muscle simultaneously.",
-      difficulty: "Intermediate",
-      totalDuration: "12 weeks",
-      tags: ["HIIT", "Cardio", "Fat Burning", "Full Body"],
-      image: "https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=500&h=300&fit=crop",
-      videoPreview: "2:30",
-      price: 49.99,
-      originalPrice: 79.99,
-      weeklyPlan: {
-        monday: ["HIIT Cardio - 30 mins", "Core Workout - 15 mins"],
-        tuesday: ["Upper Body Strength - 45 mins"],
-        wednesday: ["Active Recovery - Walking/Yoga"],
-        thursday: ["Lower Body Strength - 45 mins"],
-        friday: ["Full Body Circuit - 40 mins"],
-        saturday: ["Cardio - 30 mins"],
-        sunday: ["Rest Day"]
-      },
-      detailedContent: {
-        exercises: [
-          { name: "Burpees", sets: "3x15", duration: "45 sec work, 15 sec rest" },
-          { name: "Mountain Climbers", sets: "3x20", duration: "30 sec work, 10 sec rest" },
-          { name: "Jump Squats", sets: "4x12", duration: "40 sec work, 20 sec rest" }
-        ],
-        nutrition: "High protein, moderate carb diet with 5-6 small meals daily"
-      },
-      likes: 1247,
-      ratings: [{ stars: 5 }, { stars: 4 }, { stars: 5 }],
-      avgRating: 4.8,
-      createdAt: "2024-01-15"
-    },
-    {
-      _id: "2",
-      creatorName: "Mike Chen",
-      goal: "Muscle Gain",
-      planName: "Beast Mode Muscle Builder",
-      description: "An intensive muscle-building program focusing on progressive overload and compound movements. Designed for serious lifters who want to pack on serious muscle mass over 16 weeks.",
-      difficulty: "Advanced",
-      totalDuration: "16 weeks",
-      tags: ["Strength", "Muscle Building", "Progressive Overload", "Compound"],
-      image: "https://images.unsplash.com/photo-1581009146145-b5ef050c2e1e?w=500&h=300&fit=crop",
-      videoPreview: "3:15",
-      price: 89.99,
-      originalPrice: 129.99,
-      weeklyPlan: {
-        monday: ["Chest & Triceps - 60 mins"],
-        tuesday: ["Back & Biceps - 60 mins"],
-        wednesday: ["Legs - 75 mins"],
-        thursday: ["Shoulders - 45 mins"],
-        friday: ["Arms - 50 mins"],
-        saturday: ["Full Body - 90 mins"],
-        sunday: ["Rest Day"]
-      },
-      detailedContent: {
-        exercises: [
-          { name: "Bench Press", sets: "4x6-8", weight: "Progressive overload" },
-          { name: "Deadlifts", sets: "3x5", weight: "80-85% 1RM" },
-          { name: "Squats", sets: "4x6-8", weight: "Progressive overload" }
-        ],
-        nutrition: "Caloric surplus with 1.6-2.2g protein per kg body weight"
-      },
-      likes: 892,
-      ratings: [{ stars: 5 }, { stars: 5 }, { stars: 4 }],
-      avgRating: 4.9,
-      createdAt: "2024-02-01"
-    },
-    {
-      _id: "3",
-      creatorName: "Emma Rodriguez",
-      goal: "Strength",
-      planName: "Power & Performance Program",
-      description: "Build functional strength and athletic performance with this powerlifting-inspired program. Focus on the big three lifts while incorporating accessory work for balanced development.",
-      difficulty: "Intermediate",
-      totalDuration: "10 weeks",
-      tags: ["Powerlifting", "Strength", "Functional", "Athletic"],
-      image: "https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=500&h=300&fit=crop",
-      videoPreview: "4:00",
-      price: 69.99,
-      originalPrice: 99.99,
-      weeklyPlan: {
-        monday: ["Squat Focus - 60 mins"],
-        tuesday: ["Bench Press - 50 mins"],
-        wednesday: ["Accessory Work - 45 mins"],
-        thursday: ["Deadlift Focus - 60 mins"],
-        friday: ["Olympic Lifts - 55 mins"],
-        saturday: ["Conditioning - 30 mins"],
-        sunday: ["Rest Day"]
-      },
-      detailedContent: {
-        exercises: [
-          { name: "Back Squat", sets: "5x3", weight: "85-90% 1RM" },
-          { name: "Bench Press", sets: "5x3", weight: "85-90% 1RM" },
-          { name: "Deadlift", sets: "5x3", weight: "85-90% 1RM" }
-        ],
-        nutrition: "Balanced macros with adequate carbs for performance"
-      },
-      likes: 634,
-      ratings: [{ stars: 4 }, { stars: 5 }, { stars: 5 }],
-      avgRating: 4.7,
-      createdAt: "2024-01-28"
-    },
-    {
-      _id: "4",
-      creatorName: "Alex Thompson",
-      goal: "General Fitness",
-      planName: "Complete Beginner's Journey",
-      description: "Perfect introduction to fitness for absolute beginners. Learn proper form, build a foundation of strength, and develop healthy habits that will last a lifetime.",
-      difficulty: "Beginner",
-      totalDuration: "8 weeks",
-      tags: ["Beginner Friendly", "Form Focus", "Habit Building", "Foundation"],
-      image: "https://images.unsplash.com/photo-1549476464-37392f717541?w=500&h=300&fit=crop",
-      videoPreview: "2:45",
-      price: 29.99,
-      originalPrice: 49.99,
-      weeklyPlan: {
-        monday: ["Basic Movements - 30 mins"],
-        tuesday: ["Cardio Introduction - 25 mins"],
-        wednesday: ["Rest Day"],
-        thursday: ["Strength Basics - 35 mins"],
-        friday: ["Flexibility - 20 mins"],
-        saturday: ["Light Activity - 20 mins"],
-        sunday: ["Rest Day"]
-      },
-      detailedContent: {
-        exercises: [
-          { name: "Bodyweight Squats", sets: "3x10", progression: "Add 2 reps weekly" },
-          { name: "Push-ups", sets: "3x8", progression: "Knee to full push-ups" },
-          { name: "Plank", sets: "3x30sec", progression: "Add 10 seconds weekly" }
-        ],
-        nutrition: "Focus on whole foods and proper hydration"
-      },
-      likes: 2156,
-      ratings: [{ stars: 5 }, { stars: 5 }, { stars: 4 }],
-      avgRating: 4.9,
-      createdAt: "2024-02-10"
-    },
-    {
-      _id: "5",
-      creatorName: "Lisa Park",
-      goal: "Flexibility",
-      planName: "Yoga Flow & Mobility",
-      description: "Improve flexibility, balance, and mindfulness through daily yoga practice. This program combines traditional yoga flows with modern mobility work for optimal results.",
-      difficulty: "Beginner",
-      totalDuration: "6 weeks",
-      tags: ["Yoga", "Flexibility", "Mindfulness", "Balance"],
-      image: "https://images.unsplash.com/photo-1506629905607-46c4b3aedca2?w=500&h=300&fit=crop",
-      videoPreview: "3:30",
-      price: 39.99,
-      originalPrice: 59.99,
-      weeklyPlan: {
-        monday: ["Morning Flow - 30 mins"],
-        tuesday: ["Power Yoga - 45 mins"],
-        wednesday: ["Restorative - 40 mins"],
-        thursday: ["Vinyasa Flow - 50 mins"],
-        friday: ["Yin Yoga - 60 mins"],
-        saturday: ["Balance Focus - 35 mins"],
-        sunday: ["Meditation - 20 mins"]
-      },
-      detailedContent: {
-        exercises: [
-          { name: "Sun Salutation", sets: "5 rounds", focus: "Flow and breathing" },
-          { name: "Warrior Poses", sets: "Hold 1 min each", focus: "Strength and balance" },
-          { name: "Deep Stretches", sets: "Hold 2-3 mins", focus: "Flexibility" }
-        ],
-        nutrition: "Anti-inflammatory foods and adequate hydration"
-      },
-      likes: 1888,
-      ratings: [{ stars: 5 }, { stars: 4 }, { stars: 5 }],
-      avgRating: 4.8,
-      createdAt: "2024-01-20"
-    },
-    {
-      _id: "6",
-      creatorName: "David Kim",
-      goal: "Endurance",
-      planName: "Marathon Ready Training",
-      description: "Comprehensive marathon training program that progressively builds your endurance and speed. Includes nutrition guidance and injury prevention strategies.",
-      difficulty: "Advanced",
-      totalDuration: "20 weeks",
-      tags: ["Running", "Endurance", "Marathon", "Cardio"],
-      image: "https://images.unsplash.com/photo-1544737151406-6adde7ad7a9e?w=500&h=300&fit=crop",
-      videoPreview: "5:00",
-      price: 99.99,
-      originalPrice: 149.99,
-      weeklyPlan: {
-        monday: ["Easy Run - 45 mins"],
-        tuesday: ["Speed Work - 60 mins"],
-        wednesday: ["Cross Training - 40 mins"],
-        thursday: ["Tempo Run - 50 mins"],
-        friday: ["Rest Day"],
-        saturday: ["Long Run - 2-3 hours"],
-        sunday: ["Recovery - 30 mins easy"]
-      },
-      detailedContent: {
-        exercises: [
-          { name: "Interval Training", sets: "6x800m", pace: "5K race pace" },
-          { name: "Long Runs", distance: "Progressive 10-20 miles", pace: "Conversational" },
-          { name: "Tempo Runs", distance: "3-8 miles", pace: "Comfortably hard" }
-        ],
-        nutrition: "Carb loading strategies and electrolyte management"
-      },
-      likes: 756,
-      ratings: [{ stars: 4 }, { stars: 5 }, { stars: 5 }],
-      avgRating: 4.7,
-      createdAt: "2024-01-05"
-    }
-  ];
 
   const filters = [
     { id: 'all', label: 'All Plans', icon: Filter },
-    { id: 'weight-loss', label: 'Weight Loss', icon: Target },
-    { id: 'muscle-gain', label: 'Muscle Gain', icon: Users },
-    { id: 'strength', label: 'Strength', icon: Target },
-    { id: 'beginner', label: 'Beginner', icon: Users },
-    { id: 'advanced', label: 'Advanced', icon: Target }
+    { id: 'Weight Loss', label: 'Weight Loss', icon: Target },
+    { id: 'Muscle Gain', label: 'Muscle Gain', icon: Users },
+    { id: 'Strength', label: 'Strength', icon: Target },
+    { id: 'Beginner', label: 'Beginner', icon: Users },
+    { id: 'Advanced', label: 'Advanced', icon: Target }
   ];
 
   const getDifficultyColor = (difficulty) => {
@@ -267,112 +48,145 @@ const UserWorkoutPlan = ({ userData }) => {
     return gradients[goal] || 'from-gray-500 to-gray-600';
   };
 
+  const checkAuthStatus = () => {
+    const token = localStorage.getItem('userToken') || localStorage.getItem('token');
+    const loggedIn = !!token;
+    setIsLoggedIn(loggedIn);
+    return loggedIn;
+  };
+
+  const matchPlansToUser = (plans, user = {}) => {
+    return plans.filter(plan => {
+      const userGoal = user?.goal?.toLowerCase() || '';
+      const userLevel = user?.fitnessExperience?.toLowerCase() || '';
+      
+      const goalMatch = userGoal 
+        ? plan.goal.toLowerCase().includes(userGoal)
+        : true;
+      
+      const levelMatch = userLevel
+        ? plan.difficulty.toLowerCase() === userLevel
+        : true;
+      
+      return goalMatch && levelMatch;
+    }).slice(0, 3);
+  };
+
   useEffect(() => {
-    setTimeout(() => {
-      setPlans(workoutPlansData);
-      setFilteredPlans(workoutPlansData);
-      setLoading(false);
-    }, 1500);
+    const isAuthenticated = checkAuthStatus();
+    fetchPublishedPlans();
+    if (isAuthenticated) {
+      fetchUserPurchases();
+    }
   }, []);
 
-  useEffect(() => {
-   const fetchUserPlans = async () => {
-  try {
-    // Check if userData exists before making API call
-    if (userData && userData._id) {
-      const response = await axios.get(`/api/users/${userData._id}/plans`);
-      setPurchasedPlans(new Set(response.data.purchasedPlans));
-    }
-    
-    // Use sample data as fallback
-    setTimeout(() => {
-      setPlans(workoutPlansData);
-      const personalized = matchPlansToUser(workoutPlansData, userData || {});
-      setPersonalizedPlans(personalized);
-      setFilteredPlans(personalized);
-      setLoading(false);
-    }, 1500);
-  } catch (error) {
-    console.error("Error fetching user plans:", error);
-    // Fallback to sample data if API fails
-    setPlans(workoutPlansData);
-    const personalized = matchPlansToUser(workoutPlansData, userData || {});
-    setPersonalizedPlans(personalized);
-    setFilteredPlans(personalized);
-    setLoading(false);
-  }
-};
+  const fetchPublishedPlans = async () => {
+    try {
+      const queryParams = new URLSearchParams();
+      if (activeFilter !== 'all') {
+        if (['Weight Loss', 'Muscle Gain', 'Strength'].includes(activeFilter)) {
+          queryParams.append('goal', activeFilter);
+        } else if (['Beginner', 'Intermediate', 'Advanced'].includes(activeFilter)) {
+          queryParams.append('difficulty', activeFilter);
+        }
+      }
 
-    fetchUserPlans();
-  }, [userData]);
+      const token = localStorage.getItem('userToken') || localStorage.getItem('token');
+      const headers = { 'Content-Type': 'application/json' };
+      
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
 
- const matchPlansToUser = (plans, user = {}) => {
-  return plans.filter(plan => {
-    const userGoal = user?.goal?.toLowerCase() || '';
-    const userLevel = user?.fitnessExperience?.toLowerCase() || '';
-    
-    // Match goal
-    const goalMatch = userGoal 
-      ? plan.goal.toLowerCase().includes(userGoal)
-      : true;
-    
-    // Match fitness level
-    const levelMatch = userLevel
-      ? plan.difficulty.toLowerCase() === userLevel
-      : true;
-    
-    return goalMatch && levelMatch;
-  }).map(plan => ({
-    ...plan,
-    matchScore: calculateMatchScore(plan, user)
-  })).sort((a, b) => b.matchScore - a.matchScore);
-};
-
-const calculateMatchScore = (plan, user = {}) => {
-  let score = 0;
-  const userGoal = user?.goal?.toLowerCase() || '';
-  const userLevel = user?.fitnessExperience?.toLowerCase() || '';
-  
-  // Goal match
-  if (userGoal && plan.goal.toLowerCase() === userGoal) score += 40;
-  else if (userGoal && plan.goal.toLowerCase().includes(userGoal)) score += 30;
-  
-  // Level match
-  if (userLevel && plan.difficulty.toLowerCase() === userLevel) score += 30;
-  
-  return score;
-};
-
-  const handleFilter = (filterId) => {
-    setActiveFilter(filterId);
-    
-    if (filterId === 'all') {
-      setFilteredPlans(plans);
-    } else {
-      const filtered = plans.filter(plan => {
-        return plan.goal.toLowerCase().includes(filterId.toLowerCase()) ||
-               plan.difficulty.toLowerCase().includes(filterId.toLowerCase()) ||
-               plan.tags.some(tag => tag.toLowerCase().includes(filterId.toLowerCase()));
+      const response = await fetch(`http://localhost:5000/api/workoutPlans/public?${queryParams}`, {
+        headers
       });
-      setFilteredPlans(filtered);
+      
+      if (response.ok) {
+        const data = await response.json();
+        setPlans(data);
+        const personalized = matchPlansToUser(data, userData || {});
+        setPersonalizedPlans(personalized);
+        setFilteredPlans(data);
+      } else {
+        console.error('Failed to fetch workout plans:', response.status);
+      }
+    } catch (error) {
+      console.error('Error fetching workout plans:', error);
+    } finally {
+      setLoading(false);
     }
   };
 
-  const handlePlanAccess = async (plan) => {
-    // Track plan view in backend
-    try {
-      // In a real app:
-      await axios.post(`/api/users/${userData._id}/viewed-plans`, { planId: plan._id });
-    } catch (error) {
-      console.error("Error tracking plan view:", error);
+  const fetchUserPurchases = async () => {
+    const token = localStorage.getItem('userToken') || localStorage.getItem('token');
+    
+    if (!token) {
+      setIsLoggedIn(false);
+      return;
     }
 
-    if (purchasedPlans.has(plan._id)) {
-      setSelectedPlan(plan);
-      setShowPlanContent(true);
+    try {
+      const response = await fetch('http://localhost:5000/api/users/profile', {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (response.ok) {
+        const userData = await response.json();
+        const purchased = new Set(userData.purchasedWorkoutPlans?.map(p => p.planId) || []);
+        setPurchasedPlans(purchased);
+        setIsLoggedIn(true);
+      } else if (response.status === 401) {
+        localStorage.removeItem('userToken');
+        localStorage.removeItem('token');
+        setIsLoggedIn(false);
+      }
+    } catch (error) {
+      console.error('Error fetching user purchases:', error);
+      setIsLoggedIn(false);
+    }
+  };
+
+  const handleFilter = (filterId) => {
+    setActiveFilter(filterId);
+    fetchPublishedPlans();
+  };
+
+  const handlePlanAccess = async (plan) => {
+    if (purchasedPlans.has(plan._id) || plan.planType === 'regular') {
+      await openPlanDetails(plan);
     } else {
       setSelectedPlan(plan);
       setShowPurchaseModal(true);
+    }
+  };
+
+  const openPlanDetails = async (plan) => {
+    try {
+      const token = localStorage.getItem('userToken') || localStorage.getItem('token');
+      const headers = { 'Content-Type': 'application/json' };
+      
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+
+      const response = await fetch(`http://localhost:5000/api/workoutPlans/public/${plan._id}`, {
+        headers
+      });
+
+      if (response.ok) {
+        const detailedPlan = await response.json();
+        setSelectedPlan(detailedPlan);
+        setShowPlanContent(true);
+      } else {
+        alert('Failed to load plan details');
+      }
+    } catch (error) {
+      console.error('Error fetching plan details:', error);
+      alert('Failed to load plan details');
     }
   };
 
@@ -380,30 +194,43 @@ const calculateMatchScore = (plan, user = {}) => {
     setPaymentProcessing(true);
     
     try {
-      // In a real app, you would call your backend:
-      const response = await axios.post(`/api/users/${userData._id}/purchased-plans`, {
-        planId: selectedPlan._id,
-        amount: selectedPlan.price
+      const token = localStorage.getItem('userToken') || localStorage.getItem('token');
+      
+      if (!token) {
+        alert('Please log in to purchase this plan');
+        setPaymentProcessing(false);
+        setShowPurchaseModal(false);
+        return;
+      }
+
+      const response = await fetch(`http://localhost:5000/api/workoutPlans/${selectedPlan._id}/purchase`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        }
       });
-      
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      
-      // Add plan to purchased plans
-      setPurchasedPlans(prev => new Set([...prev, selectedPlan._id]));
-      setPaymentProcessing(false);
-      setShowPurchaseModal(false);
-      
-      // Show success and then plan content
-      setTimeout(() => {
-        setShowPlanContent(true);
-      }, 500);
+
+      if (response.ok) {
+        setPurchasedPlans(prev => new Set([...prev, selectedPlan._id]));
+        setPaymentProcessing(false);
+        setShowPurchaseModal(false);
+        alert('Workout plan purchased successfully!');
+        
+        setTimeout(() => {
+          setShowPlanContent(true);
+        }, 500);
+      } else {
+        const error = await response.json();
+        alert(error.error || 'Failed to purchase workout plan');
+        setPaymentProcessing(false);
+      }
     } catch (error) {
-      console.error("Purchase failed:", error);
+      console.error('Error purchasing workout plan:', error);
+      alert('Failed to purchase workout plan. Please try again.');
       setPaymentProcessing(false);
     }
   };
-
 
   const PurchaseModal = () => (
     <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
@@ -426,12 +253,12 @@ const calculateMatchScore = (plan, user = {}) => {
         <div className="bg-gradient-to-r from-purple-50 to-blue-50 rounded-xl p-4 mb-6">
           <div className="flex justify-between items-center mb-2">
             <span className="text-gray-600">Original Price</span>
-            <span className="text-gray-400 line-through">${selectedPlan?.originalPrice}</span>
+            <span className="text-gray-400 line-through">${selectedPlan?.originalPrice || selectedPlan?.price}</span>
           </div>
           <div className="flex justify-between items-center mb-2">
             <span className="text-gray-600">Discount</span>
             <span className="text-green-600 font-semibold">
-              -${(selectedPlan?.originalPrice - selectedPlan?.price).toFixed(2)}
+              -${((selectedPlan?.originalPrice || selectedPlan?.price) - selectedPlan?.price).toFixed(2)}
             </span>
           </div>
           <hr className="my-2" />
@@ -449,10 +276,6 @@ const calculateMatchScore = (plan, user = {}) => {
           <div className="flex items-center text-sm text-gray-600">
             <Check className="text-green-500 mr-2" size={16} />
             Detailed workout schedules
-          </div>
-          <div className="flex items-center text-sm text-gray-600">
-            <Check className="text-green-500 mr-2" size={16} />
-            Nutrition guidelines included
           </div>
           <div className="flex items-center text-sm text-gray-600">
             <Check className="text-green-500 mr-2" size={16} />
@@ -481,78 +304,22 @@ const calculateMatchScore = (plan, user = {}) => {
     </div>
   );
 
-  // const PlanContentModal = () => (
-  //   <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-  //     <div className="bg-white rounded-2xl max-w-4xl w-full max-h-screen overflow-y-auto p-6 relative">
-  //       <button
-  //         onClick={() => setShowPlanContent(false)}
-  //         className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors z-10"
-  //       >
-  //         <X size={24} />
-  //       </button>
-        
-  //       <div className="mb-6">
-  //         <h2 className="text-3xl font-bold text-gray-800 mb-2">{selectedPlan?.planName}</h2>
-  //         <p className="text-gray-600">by {selectedPlan?.creatorName}</p>
-  //       </div>
-
-  //       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-  //         {/* Weekly Schedule */}
-  //         <div className="bg-gradient-to-r from-purple-50 to-blue-50 rounded-xl p-6">
-  //           <h3 className="text-xl font-bold text-gray-800 mb-4">Weekly Schedule</h3>
-  //           <div className="space-y-3">
-  //             {Object.entries(selectedPlan?.weeklyPlan || {}).map(([day, exercises]) => (
-  //               <div key={day} className="flex justify-between items-center py-2 border-b border-gray-200 last:border-b-0">
-  //                 <span className="font-semibold text-gray-700 capitalize">{day}</span>
-  //                 <span className="text-sm text-gray-600">{exercises.join(', ')}</span>
-  //               </div>
-  //             ))}
-  //           </div>
-  //         </div>
-
-  //         {/* Detailed Exercises */}
-  //         <div className="bg-gradient-to-r from-green-50 to-blue-50 rounded-xl p-6">
-  //           <h3 className="text-xl font-bold text-gray-800 mb-4">Key Exercises</h3>
-  //           <div className="space-y-4">
-  //             {selectedPlan?.detailedContent?.exercises?.map((exercise, index) => (
-  //               <div key={index} className="border-l-4 border-purple-500 pl-4">
-  //                 <h4 className="font-semibold text-gray-800">{exercise.name}</h4>
-  //                 <p className="text-sm text-gray-600">{exercise.sets}</p>
-  //                 <p className="text-xs text-gray-500">{exercise.duration || exercise.weight || exercise.pace || exercise.progression || exercise.focus}</p>
-  //               </div>
-  //             ))}
-  //           </div>
-  //         </div>
-  //       </div>
-
-  //       {/* Nutrition Guidelines */}
-  //       <div className="mt-6 bg-gradient-to-r from-orange-50 to-red-50 rounded-xl p-6">
-  //         <h3 className="text-xl font-bold text-gray-800 mb-3">Nutrition Guidelines</h3>
-  //         <p className="text-gray-700">{selectedPlan?.detailedContent?.nutrition}</p>
-  //       </div>
-  //     </div>
-  //   </div>
-  // );
-
   const PlanContentModal = () => {
     const getPersonalizedTips = () => {
       if (!selectedPlan || !userData) return null;
       
       const tips = [];
       
-      // Nutrition tip based on diet preference
       if (userData.dietPreference === 'veg') {
         tips.push(`As a vegetarian, focus on plant-based proteins like lentils and quinoa to support your ${selectedPlan.goal} goals.`);
       } else if (userData.dietPreference === 'non-veg') {
         tips.push(`With your non-vegetarian diet, lean meats and fish will help you achieve ${selectedPlan.goal}.`);
       }
       
-      // Activity level tip
       if (userData.activityLevel === 'sedentary') {
         tips.push(`Since you're currently sedentary, start slowly and gradually increase intensity.`);
       }
       
-      // Weight-based tip
       if (userData.goal === 'weight loss' && userData.weight) {
         tips.push(`At your current weight, this plan will help create a sustainable calorie deficit.`);
       }
@@ -589,42 +356,21 @@ const calculateMatchScore = (plan, user = {}) => {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Weekly Schedule */}
-            <div className="bg-gradient-to-r from-purple-50 to-blue-50 rounded-xl p-6">
-              <h3 className="text-xl font-bold text-gray-800 mb-4">Weekly Schedule</h3>
-              <div className="space-y-3">
-                {Object.entries(selectedPlan?.weeklyPlan || {}).map(([day, exercises]) => (
-                  <div key={day} className="flex justify-between items-center py-2 border-b border-gray-200 last:border-b-0">
-                    <span className="font-semibold text-gray-700 capitalize">{day}</span>
-                    <span className="text-sm text-gray-600">{exercises.join(', ')}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Detailed Exercises */}
-            <div className="bg-gradient-to-r from-green-50 to-blue-50 rounded-xl p-6">
-              <h3 className="text-xl font-bold text-gray-800 mb-4">Key Exercises</h3>
-              <div className="space-y-4">
-                {selectedPlan?.detailedContent?.exercises?.map((exercise, index) => (
-                  <div key={index} className="border-l-4 border-purple-500 pl-4">
-                    <h4 className="font-semibold text-gray-800">{exercise.name}</h4>
-                    <p className="text-sm text-gray-600">{exercise.sets}</p>
-                    <p className="text-xs text-gray-500">{exercise.duration || exercise.weight || exercise.pace || exercise.progression || exercise.focus}</p>
-                  </div>
-                ))}
-              </div>
+          {/* Weekly Schedule */}
+          <div className="bg-gradient-to-r from-purple-50 to-blue-50 rounded-xl p-6 mb-6">
+            <h3 className="text-xl font-bold text-gray-800 mb-4">Weekly Schedule</h3>
+            <div className="space-y-3">
+              {Object.entries(selectedPlan?.weeklyPlan || {}).map(([day, exercises]) => (
+                <div key={day} className="flex justify-between items-center py-2 border-b border-gray-200 last:border-b-0">
+                  <span className="font-semibold text-gray-700 capitalize">{day}</span>
+                  <span className="text-sm text-gray-600">
+                    {Array.isArray(exercises) ? exercises.join(', ') : exercises}
+                  </span>
+                </div>
+              ))}
             </div>
           </div>
 
-          {/* Nutrition Guidelines */}
-          <div className="mt-6 bg-gradient-to-r from-orange-50 to-red-50 rounded-xl p-6">
-            <h3 className="text-xl font-bold text-gray-800 mb-3">Nutrition Guidelines</h3>
-            <p className="text-gray-700">{selectedPlan?.detailedContent?.nutrition}</p>
-          </div>
-
-          {/* Personalized Tips */}
           {personalizedTips && (
             <div className="mt-6 bg-gradient-to-r from-green-50 to-blue-50 rounded-xl p-6">
               <h3 className="text-xl font-bold text-gray-800 mb-3 flex items-center">
@@ -639,7 +385,6 @@ const calculateMatchScore = (plan, user = {}) => {
             </div>
           )}
 
-          {/* Connect with Trainer */}
           <div className="mt-6 bg-gradient-to-r from-purple-50 to-pink-50 rounded-xl p-6">
             <h3 className="text-xl font-bold text-gray-800 mb-3">Need Help?</h3>
             <p className="text-gray-700 mb-4">Get personalized guidance from our certified trainers.</p>
@@ -655,7 +400,11 @@ const calculateMatchScore = (plan, user = {}) => {
     );
   };
 
-    if (loading) {
+  useEffect(() => {
+    fetchPublishedPlans();
+  }, [activeFilter]);
+
+  if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-gray-900 via-purple-900 to-black flex items-center justify-center">
         <div className="text-center">
@@ -712,7 +461,7 @@ const calculateMatchScore = (plan, user = {}) => {
             </h2>
             
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {personalizedPlans.slice(0, 3).map(plan => (
+              {personalizedPlans.map(plan => (
                 <div 
                   key={plan._id}
                   className="bg-gradient-to-br from-purple-900/50 to-blue-900/50 rounded-2xl p-6 border border-white/10 hover:border-white/20 transition-all hover:-translate-y-1 shadow-lg"
@@ -724,9 +473,6 @@ const calculateMatchScore = (plan, user = {}) => {
                       'bg-red-500/20 text-red-400'
                     }`}>
                       {plan.difficulty}
-                    </span>
-                    <span className="text-xs bg-white/10 px-2 py-1 rounded text-white/80">
-                      {Math.round((plan.matchScore / 100) * 100)}% Match
                     </span>
                   </div>
                   
@@ -775,155 +521,147 @@ const calculateMatchScore = (plan, user = {}) => {
               );
             })}
           </div>
-        {/* Plans Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
-          {filteredPlans.map(plan => (
-            <div
-              key={plan._id}
-              className="bg-white/95 backdrop-blur-lg rounded-2xl overflow-hidden shadow-2xl hover:shadow-3xl transition-all duration-500 hover:-translate-y-2 hover:scale-105 border border-white/20 group"
-            >
-              {/* Image Section */}
-              <div className="relative h-48 overflow-hidden">
-                <img
-                  src={plan.image}
-                  alt={plan.planName}
-                  className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent"></div>
-                
-                {/* Difficulty Badge */}
-                <div className={`absolute top-4 right-4 px-3 py-1 rounded-full text-white text-sm font-semibold ${getDifficultyColor(plan.difficulty)}`}>
-                  {plan.difficulty}
-                </div>
-                
-                {/* Video Preview */}
-                {plan.videoPreview && (
-                  <div className="absolute top-4 left-4 flex items-center gap-2 bg-black/70 text-white px-3 py-1 rounded-full text-sm backdrop-blur-sm">
-                    <Play size={14} />
-                    {plan.videoPreview}
-                  </div>
-                )}
 
-                {/* Price Badge */}
-                <div className="absolute bottom-4 left-4 bg-gradient-to-r from-green-500 to-emerald-500 text-white px-3 py-1 rounded-full font-bold">
-                  ${plan.price}
-                  {plan.originalPrice && (
-                    <span className="ml-2 text-xs line-through opacity-70">${plan.originalPrice}</span>
+          {/* Plans Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
+            {filteredPlans.map(plan => (
+              <div
+                key={plan._id}
+                className="bg-white/95 backdrop-blur-lg rounded-2xl overflow-hidden shadow-2xl hover:shadow-3xl transition-all duration-500 hover:-translate-y-2 hover:scale-105 border border-white/20 group"
+              >
+                {/* Image Section */}
+                <div className="relative h-48 overflow-hidden">
+                  {plan.image ? (
+                    <img
+                      src={plan.image}
+                      alt={plan.planName}
+                      className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                    />
+                  ) : (
+                    <div className="w-full h-full bg-gradient-to-br from-blue-400 to-purple-600 flex items-center justify-center">
+                      <Dumbbell className="w-16 h-16 text-white" />
+                    </div>
                   )}
-                </div>
-              </div>
-
-              {/* Content */}
-              <div className="p-6">
-                {/* Header */}
-                <div className="mb-4">
-                  <h3 className="text-xl font-bold text-gray-800 mb-2 line-clamp-2">{plan.planName}</h3>
-                  <p className="text-gray-600 text-sm mb-2">by {plan.creatorName}</p>
-                  <div className={`inline-block px-3 py-1 rounded-full text-white text-sm font-medium bg-gradient-to-r ${getGoalGradient(plan.goal)}`}>
-                    {plan.goal}
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent"></div>
+                  
+                  {/* Difficulty Badge */}
+                  <div className={`absolute top-4 right-4 px-3 py-1 rounded-full text-white text-sm font-semibold ${getDifficultyColor(plan.difficulty)}`}>
+                    {plan.difficulty}
                   </div>
-                </div>
-
-                {/* Description */}
-                <p className="text-gray-700 text-sm mb-4 line-clamp-3 leading-relaxed">{plan.description}</p>
-
-                {/* Meta Info */}
-                <div className="grid grid-cols-2 gap-4 mb-4">
-                  <div className="bg-gradient-to-r from-purple-50 to-blue-50 p-3 rounded-lg text-center">
-                    <div className="flex items-center justify-center gap-1 mb-1">
-                      <Clock size={16} className="text-purple-600" />
-                      <span className="text-xs text-gray-600 font-medium">DURATION</span>
+                  
+                  {/* Video Preview */}
+                  {plan.videoPreview && (
+                    <div className="absolute top-4 left-4 flex items-center gap-2 bg-black/70 text-white px-3 py-1 rounded-full text-sm backdrop-blur-sm">
+                      <Play size={14} />
+                      Preview
                     </div>
-                    <p className="font-bold text-gray-800">{plan.totalDuration}</p>
-                  </div>
-                  <div className="bg-gradient-to-r from-pink-50 to-rose-50 p-3 rounded-lg text-center">
-                    <div className="flex items-center justify-center gap-1 mb-1">
-                      <Target size={16} className="text-pink-600" />
-                      <span className="text-xs text-gray-600 font-medium">LEVEL</span>
-                    </div>
-                    <p className="font-bold text-gray-800">{plan.difficulty}</p>
-                  </div>
-                </div>
+                  )}
 
-                {/* Tags */}
-                <div className="flex flex-wrap gap-2 mb-4">
-                  {plan.tags.slice(0, 3).map(tag => (
-                    <span key={tag} className="bg-gradient-to-r from-purple-100 to-blue-100 text-purple-700 px-2 py-1 rounded-lg text-xs font-medium">
-                      {tag}
-                    </span>
-                  ))}
-                  {plan.tags.length > 3 && (
-                    <span className="bg-gray-100 text-gray-600 px-2 py-1 rounded-lg text-xs font-medium">
-                      +{plan.tags.length - 3} more
-                    </span>
+                  {/* Price Badge */}
+                  {plan.planType === 'premium' && (
+                    <div className="absolute bottom-4 left-4 bg-gradient-to-r from-green-500 to-emerald-500 text-white px-3 py-1 rounded-full font-bold">
+                      ${plan.price}
+                    </div>
+                  )}
+                  {plan.planType === 'regular' && (
+                    <div className="absolute bottom-4 left-4 bg-gradient-to-r from-blue-500 to-cyan-500 text-white px-3 py-1 rounded-full font-bold">
+                      FREE
+                    </div>
                   )}
                 </div>
 
-                {/* Weekly Schedule Preview */}
-                <div className="bg-gradient-to-r from-gray-50 to-blue-50 rounded-lg p-4 mb-4">
-                  <h4 className="font-semibold text-gray-800 mb-3 text-center">Weekly Schedule</h4>
-                  <div className="grid grid-cols-7 gap-1">
-                    {Object.entries(plan.weeklyPlan).map(([day, exercises]) => (
-                      <div
-                        key={day}
-                        className={`text-center p-2 rounded-lg text-xs font-medium transition-all duration-300 ${
-                          exercises.length > 0 && exercises[0] !== 'Rest Day'
-                            ? 'bg-gradient-to-r from-purple-500 to-blue-500 text-white shadow-lg'
-                            : 'bg-gray-200 text-gray-600'
-                        }`}
-                      >
-                        {day.slice(0, 3).toUpperCase()}
+                {/* Content */}
+                <div className="p-6">
+                  {/* Header */}
+                  <div className="mb-4">
+                    <h3 className="text-xl font-bold text-gray-800 mb-2 line-clamp-2">{plan.planName}</h3>
+                    <p className="text-gray-600 text-sm mb-2">by {plan.creatorName}</p>
+                    <div className={`inline-block px-3 py-1 rounded-full text-white text-sm font-medium bg-gradient-to-r ${getGoalGradient(plan.goal)}`}>
+                      {plan.goal}
+                    </div>
+                  </div>
+
+                  {/* Description */}
+                  <p className="text-gray-700 text-sm mb-4 line-clamp-3 leading-relaxed">{plan.description}</p>
+
+                  {/* Meta Info */}
+                  <div className="grid grid-cols-2 gap-4 mb-4">
+                    <div className="bg-gradient-to-r from-purple-50 to-blue-50 p-3 rounded-lg text-center">
+                      <div className="flex items-center justify-center gap-1 mb-1">
+                        <Clock size={16} className="text-purple-600" />
+                        <span className="text-xs text-gray-600 font-medium">DURATION</span>
                       </div>
-                    ))}
+                      <p className="font-bold text-gray-800">{plan.totalDuration}</p>
+                    </div>
+                    <div className="bg-gradient-to-r from-pink-50 to-rose-50 p-3 rounded-lg text-center">
+                      <div className="flex items-center justify-center gap-1 mb-1">
+                        <Target size={16} className="text-pink-600" />
+                        <span className="text-xs text-gray-600 font-medium">LEVEL</span>
+                      </div>
+                      <p className="font-bold text-gray-800">{plan.difficulty}</p>
+                    </div>
                   </div>
-                </div>
 
-                {/* Actions */}
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-4">
-                    <div className="flex items-center gap-1">
-                      <Star className="text-yellow-500 fill-current" size={18} />
-                      <span className="font-semibold text-gray-800">{plan.avgRating}</span>
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <Heart className="text-red-500 fill-current" size={18} />
-                      <span className="font-semibold text-gray-800">{plan.likes.toLocaleString()}</span>
-                    </div>
-                  </div>
-                  <button
-                    onClick={() => handlePlanAccess(plan)}
-                    className={`flex items-center gap-2 px-6 py-2 rounded-full font-semibold transition-all duration-300 hover:scale-105 hover:shadow-lg ${
-                      purchasedPlans.has(plan._id)
-                        ? 'bg-gradient-to-r from-emerald-600 to-green-600 hover:from-emerald-700 hover:to-green-700 text-white'
-                        : 'bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white'
-                    }`}
-                  >
-                    {purchasedPlans.has(plan._id) ? (
-                      <>
-                        <Check size={16} />
-                        View Plan
-                      </>
-                    ) : (
-                      <>
-                        <Lock size={16} />
-                        Get Access
-                      </>
+                  {/* Tags */}
+                  <div className="flex flex-wrap gap-2 mb-4">
+                    {plan.tags.slice(0, 3).map(tag => (
+                      <span key={tag} className="bg-gradient-to-r from-purple-100 to-blue-100 text-purple-700 px-2 py-1 rounded-lg text-xs font-medium">
+                        {tag}
+                      </span>
+                    ))}
+                    {plan.tags.length > 3 && (
+                      <span className="bg-gray-100 text-gray-600 px-2 py-1 rounded-lg text-xs font-medium">
+                        +{plan.tags.length - 3} more
+                      </span>
                     )}
-                    <ChevronRight size={16} />
-                  </button>
+                  </div>
+
+                  {/* Actions */}
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-4">
+                      <div className="flex items-center gap-1">
+                        <Star className="text-yellow-500 fill-current" size={18} />
+                        <span className="font-semibold text-gray-800">{plan.avgRating || 0}</span>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <Users className="text-blue-500" size={18} />
+                        <span className="font-semibold text-gray-800">{plan.totalPurchases || 0}</span>
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => handlePlanAccess(plan)}
+                      className={`flex items-center gap-2 px-6 py-2 rounded-full font-semibold transition-all duration-300 hover:scale-105 hover:shadow-lg ${
+                        purchasedPlans.has(plan._id) || plan.planType === 'regular'
+                          ? 'bg-gradient-to-r from-emerald-600 to-green-600 hover:from-emerald-700 hover:to-green-700 text-white'
+                          : 'bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white'
+                      }`}
+                    >
+                      {purchasedPlans.has(plan._id) || plan.planType === 'regular' ? (
+                        <>
+                          <Check size={16} />
+                          View Plan
+                        </>
+                      ) : (
+                        <>
+                          <Lock size={16} />
+                          Get Access
+                        </>
+                      )}
+                      <ChevronRight size={16} />
+                    </button>
+                  </div>
                 </div>
               </div>
-            </div>
-          ))}
-        </div>
-
-        {filteredPlans.length === 0 && !loading && (
-          <div className="text-center py-16">
-            <div className="text-white/60 text-xl mb-4">No workout plans found</div>
-            <p className="text-white/40">Try adjusting your filters to see more results</p>
+            ))}
           </div>
-        )}
-      </div>
+
+          {filteredPlans.length === 0 && !loading && (
+            <div className="text-center py-16">
+              <div className="text-white/60 text-xl mb-4">No workout plans found</div>
+              <p className="text-white/40">Try adjusting your filters to see more results</p>
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Modals */}

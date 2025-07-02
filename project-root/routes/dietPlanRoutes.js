@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { protect, creatorProtect } = require('../middlewares/authMiddleware');
+const { protect, creatorProtect, optionalProtect } = require('../middlewares/authMiddleware');
 const upload = require('../middlewares/multer');
 const {
   createDietPlan,
@@ -12,16 +12,28 @@ const {
   getPublishedDietPlans,
   getPublishedDietPlanById,
   purchaseDietPlan,
-  rateDietPlan
+  rateDietPlan,
+  checkAuthStatus
 } = require('../controllers/dietPlanController');
 
-// Public routes (for users to view published plans)
-router.get('/public', getPublishedDietPlans);
-router.get('/public/:id', getPublishedDietPlanById);
+// Public routes (for users to view published plans) - now with optional authentication
+router.get('/public', optionalProtect, getPublishedDietPlans);
+router.get('/public/:id', optionalProtect, getPublishedDietPlanById);
 
 // User routes (require user authentication)
-router.post('/:id/purchase', protect, purchaseDietPlan);
+router.post('/:id/purchase', protect, purchaseDietPlan); // Change back to protect instead of optionalProtect
 router.post('/:id/rate', protect, rateDietPlan);
+router.get('/auth-status', protect, checkAuthStatus);
+
+// Add a route to check if user can purchase (for debugging)
+router.get('/:id/can-purchase', optionalProtect, (req, res) => {
+  const canPurchase = !!req.user;
+  res.json({ 
+    canPurchase, 
+    isAuthenticated: !!req.user,
+    userId: req.user ? req.user._id : null 
+  });
+});
 
 // Creator routes (require creator authentication)
 router.post('/', creatorProtect, upload.single('image'), createDietPlan);
