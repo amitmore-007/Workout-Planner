@@ -7,16 +7,14 @@ const storage = multer.diskStorage({
     cb(null, "uploads/");
   },
   filename: function (req, file, cb) {
-    // Create unique filename
-    const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
     cb(
       null,
-      file.fieldname + "-" + uniqueSuffix + path.extname(file.originalname)
+      Date.now() + "-" + Math.round(Math.random() * 1e9) + path.extname(file.originalname)
     );
   },
 });
 
-// File filter for images
+// File filter
 const fileFilter = (req, file, cb) => {
   if (file.mimetype.startsWith("image/")) {
     cb(null, true);
@@ -25,10 +23,13 @@ const fileFilter = (req, file, cb) => {
   }
 };
 
+// Configure multer with increased limits
 const upload = multer({
   storage: storage,
   limits: {
-    fileSize: 5 * 1024 * 1024, // 5MB limit
+    fileSize: 10 * 1024 * 1024, // 10MB limit (increased from default)
+    fieldSize: 1024 * 1024, // 1MB for text fields
+    files: 1, // Only allow 1 file
   },
   fileFilter: fileFilter,
 });

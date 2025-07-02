@@ -8,60 +8,87 @@ const fs = require('fs').promises;
 // @route   POST /api/dietPlans
 // @access  Creator
 const createDietPlan = asyncHandler(async (req, res) => {
-  const {
-    name,
-    subtitle,
-    category,
-    description,
-    duration,
-    difficulty,
-    planType,
-    price,
-    features,
-    preview,
-    detailedContent,
-    tags
-  } = req.body;
+  try {
+    const {
+      name,
+      subtitle,
+      category,
+      description,
+      duration,
+      difficulty,
+      planType,
+      price,
+      features,
+      preview,
+      detailedContent,
+      tags
+    } = req.body;
 
-  let imageUrl = '';
-  let imagePublicId = '';
+    let imageUrl = '';
+    let imagePublicId = '';
 
-  // Upload image to Cloudinary if provided
-  if (req.file) {
-    try {
-      const uploadResult = await uploadToCloudinary(req.file, 'diet-plans');
-      imageUrl = uploadResult.secure_url;
-      imagePublicId = uploadResult.public_id;
-      
-      // Delete the temporary file
-      await fs.unlink(req.file.path);
-    } catch (error) {
-      console.error('Error uploading image:', error);
-      // Continue without image if upload fails
+    // Upload image to Cloudinary if provided
+    if (req.file) {
+      try {
+        console.log('Uploading file to Cloudinary:', req.file.filename, `(${(req.file.size / 1024 / 1024).toFixed(2)}MB)`);
+        const uploadResult = await uploadToCloudinary(req.file, 'diet-plans');
+        imageUrl = uploadResult.secure_url;
+        imagePublicId = uploadResult.public_id;
+        console.log('Successfully uploaded to Cloudinary:', uploadResult.public_id);
+        
+        // Delete the temporary file
+        await fs.unlink(req.file.path);
+      } catch (error) {
+        console.error('Error uploading image to Cloudinary:', error);
+        // Delete the temporary file if upload fails
+        if (req.file && req.file.path) {
+          try {
+            await fs.unlink(req.file.path);
+          } catch (unlinkError) {
+            console.error('Error deleting temporary file:', unlinkError);
+          }
+        }
+        res.status(400);
+        throw new Error('Failed to upload image. Please try with a smaller image or different format.');
+      }
     }
+
+    const dietPlan = new DietPlan({
+      creatorId: req.user.id,
+      creatorName: req.user.name,
+      name,
+      subtitle,
+      category,
+      description,
+      duration,
+      difficulty,
+      planType,
+      price: planType === 'premium' ? price : 0,
+      features: features ? features.split(',').map(f => f.trim()).filter(f => f) : [],
+      preview,
+      detailedContent: JSON.parse(detailedContent || '{}'),
+      tags: tags ? tags.split(',').map(t => t.trim()).filter(t => t) : [],
+      image: imageUrl,
+      imagePublicId: imagePublicId
+    });
+
+    await dietPlan.save();
+    console.log('Diet plan created successfully:', dietPlan.name);
+    res.status(201).json(dietPlan);
+  } catch (error) {
+    console.error('Error in createDietPlan:', error);
+    
+    // Clean up uploaded file if something goes wrong
+    if (req.file && req.file.path) {
+      try {
+        await fs.unlink(req.file.path);
+      } catch (unlinkError) {
+        console.error('Error deleting temporary file:', unlinkError);
+      }
+    }
+    
+    throw error;
   }
-
-  const dietPlan = new DietPlan({
-    creatorId: req.user.id,
-    creatorName: req.user.name,
-    name,
-    subtitle,
-    category,
-    description,
-    duration,
-    difficulty,
-    planType,
-    price: planType === 'premium' ? price : 0,
-    features: features ? features.split(',') : [],
-    preview,
-    detailedContent: JSON.parse(detailedContent || '{}'),
-    tags: tags ? tags.split(',') : [],
-    image: imageUrl,
-    imagePublicId: imagePublicId
-  });
-
-  await dietPlan.save();
-  res.status(201).json(dietPlan);
 });
 
 // @desc    Get creator's diet plans
@@ -268,33 +295,66 @@ const getPublishedDietPlanById = asyncHandler(async (req, res) => {
     throw new Error("Diet plan not found");
   }
 
+  console.log('Plan found:', plan.name);
+  console.log('User from request:', req.user ? req.user.name : 'No user');
+  console.log('Plan type:', plan.planType);
+
   // If user is logged in, track that they viewed this plan
   if (req.user) {
-    await User.findByIdAndUpdate(req.user.id, {
-      $addToSet: { viewedDietPlans: plan._id }
-    });
+    try {
+      await User.findByIdAndUpdate(req.user.id, {
+        $addToSet: { viewedDietPlans: plan._id }
+      });
+      console.log('Tracked view for user:', req.user.name);
+    } catch (error) {
+      console.error('Error tracking view:', error);
+      // Don't throw error, just log it
+    }
   }
 
   // Return limited data for regular plans, full data for premium if purchased
   let responseData = { ...plan.toObject() };
   
-  if (plan.planType === 'premium' && req.user) {
-    const user = await User.findById(req.user.id);
-    const hasPurchased = user.purchasedDietPlans.some(p => p.planId.equals(plan._id));
-    
-    if (!hasPurchased) {
-      // Remove premium content for non-purchasers
-      delete responseData.detailedContent.shoppingLists;
-      delete responseData.detailedContent.mealPrepGuides;
-      delete responseData.detailedContent.videoContent;
-      delete responseData.detailedContent.personalizedMacros;
+  if (plan.planType === 'premium') {
+    if (req.user) {
+      try {
+        const user = await User.findById(req.user.id);
+        const hasPurchased = user.purchasedDietPlans.some(p => p.planId.equals(plan._id));
+        
+        console.log('User has purchased plan:', hasPurchased);
+        
+        if (!hasPurchased) {
+          // Remove premium content for non-purchasers
+          if (responseData.detailedContent) {
+            delete responseData.detailedContent.shoppingLists;
+            delete responseData.detailedContent.mealPrepGuides;
+            delete responseData.detailedContent.videoContent;
+            delete responseData.detailedContent.personalizedMacros;
+          }
+          console.log('Removed premium content for non-purchaser');
+        } else {
+          console.log('User has purchased - returning full content');
+        }
+      } catch (error) {
+        console.error('Error checking user purchase:', error);
+        // If there's an error checking purchase, treat as non-purchased
+        if (responseData.detailedContent) {
+          delete responseData.detailedContent.shoppingLists;
+          delete responseData.detailedContent.mealPrepGuides;
+          delete responseData.detailedContent.videoContent;
+          delete responseData.detailedContent.personalizedMacros;
+        }
+      }
+    } else {
+      // Remove premium content for non-logged users
+      if (responseData.detailedContent) {
+        delete responseData.detailedContent.shoppingLists;
+        delete responseData.detailedContent.mealPrepGuides;
+        delete responseData.detailedContent.videoContent;
+        delete responseData.detailedContent.personalizedMacros;
+      }
+      console.log('No user logged in - removed premium content');
     }
-  } else if (plan.planType === 'premium' && !req.user) {
-    // Remove premium content for non-logged users
-    delete responseData.detailedContent.shoppingLists;
-    delete responseData.detailedContent.mealPrepGuides;
-    delete responseData.detailedContent.videoContent;
-    delete responseData.detailedContent.personalizedMacros;
   }
 
   res.json(responseData);
@@ -304,6 +364,15 @@ const getPublishedDietPlanById = asyncHandler(async (req, res) => {
 // @route   POST /api/dietPlans/:id/purchase
 // @access  User
 const purchaseDietPlan = asyncHandler(async (req, res) => {
+  console.log('Purchase attempt - User:', req.user ? req.user.name : 'No user');
+  console.log('Purchase attempt - Plan ID:', req.params.id);
+
+  // Check if user is authenticated
+  if (!req.user) {
+    res.status(401);
+    throw new Error("Please log in to purchase this diet plan");
+  }
+
   const plan = await DietPlan.findOne({
     _id: req.params.id,
     isPublished: true
@@ -321,12 +390,19 @@ const purchaseDietPlan = asyncHandler(async (req, res) => {
 
   const user = await User.findById(req.user.id);
   
+  if (!user) {
+    res.status(404);
+    throw new Error("User not found");
+  }
+  
   // Check if already purchased
   const alreadyPurchased = user.purchasedDietPlans.some(p => p.planId.equals(plan._id));
   if (alreadyPurchased) {
     res.status(400);
     throw new Error("Diet plan already purchased");
   }
+
+  console.log('Processing purchase for user:', user.name, 'Plan:', plan.name);
 
   // In a real app, you would process payment here
   // For now, we'll simulate a successful payment
@@ -345,9 +421,16 @@ const purchaseDietPlan = asyncHandler(async (req, res) => {
   plan.totalPurchases += 1;
   await plan.save();
 
+  console.log('Purchase completed successfully');
+
   res.json({
     message: "Diet plan purchased successfully",
-    plan
+    plan: {
+      _id: plan._id,
+      name: plan.name,
+      subtitle: plan.subtitle,
+      price: plan.price
+    }
   });
 });
 
@@ -399,6 +482,27 @@ const rateDietPlan = asyncHandler(async (req, res) => {
   res.json({ message: "Rating submitted successfully" });
 });
 
+// @desc    Check authentication status
+// @route   GET /api/dietPlans/auth-status
+// @access  User
+const checkAuthStatus = asyncHandler(async (req, res) => {
+  if (req.user) {
+    res.json({
+      isAuthenticated: true,
+      user: {
+        id: req.user._id,
+        name: req.user.name,
+        email: req.user.email
+      }
+    });
+  } else {
+    res.status(401).json({
+      isAuthenticated: false,
+      message: 'Not authenticated'
+    });
+  }
+});
+
 module.exports = {
   createDietPlan,
   getCreatorDietPlans,
@@ -409,5 +513,6 @@ module.exports = {
   getPublishedDietPlans,
   getPublishedDietPlanById,
   purchaseDietPlan,
-  rateDietPlan
+  rateDietPlan,
+  checkAuthStatus
 };

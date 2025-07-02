@@ -4,6 +4,11 @@ import UserDashboard from "./pages/user/UserDashboard";
 import UserWorkoutDashboard from "./pages/user/UserWorkoutPlan";
 import UserDietPlan from "./pages/user/UserDietPlan";
 import FoodScanner from "./pages/user/FoodScanner";
+// Add these imports and routes to your main App.js file
+import VideoMeetSetup from './pages/creator/VideoMeetSetup';
+import VideoTraining from './pages/user/VideoTraining';
+
+// Add these routes:
 
 
 import UserLogin from "./pages/user/UserLogin";
@@ -35,6 +40,8 @@ const App = () => {
       <Route path="/creator-register" element={<CreatorRegister />} />
       <Route path="/creator-dashboard" element={<CreatorDashboard />} />
       <Route path="/creator-dashboard/create-workout" element={<CreateWorkoutPlan />} />
+      <Route path="/creator/video-meet" element={<VideoMeetSetup />} />
+
       
       {/* Creator Diet Plan Routes */}
       <Route path="/creator/diet-plans" element={<DietPlanManagement />} />
@@ -50,6 +57,7 @@ const App = () => {
         <Route path="user-scanner" element={<FoodScanner />} />
         <Route path="user-chatbot" element={<ChatBot />} />
         <Route path="user-recipe-generator" element={<RecipeGenerator />} />
+        <Route path="/user/video-training" element={<VideoTraining />} /> 
         {/* <Route path="user-video-meet" element={<UserVideoMeet />} /> */}
       </Route>
     </Routes>

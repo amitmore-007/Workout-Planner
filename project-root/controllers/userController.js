@@ -135,26 +135,37 @@ const loginUser = async (req, res) => {
 // });
 
 const getUserProfile = asyncHandler(async (req, res) => {
-    // The user should now be properly attached by the protect middleware
-    const user = await User.findById(req.user._id).select("-password");
-    
-    if (!user) {
-      res.status(404);
-      throw new Error("User not found");
-    }
+  console.log('Get user profile - User ID:', req.user._id);
   
-    res.json({
-      _id: user._id,
-      name: user.name,
-      email: user.email,
-      weight: user.weight,
-      height: user.height,
-      goal: user.goal,
-      activityLevel: user.activityLevel,
-      dietPreference: user.dietPreference,
-      fitnessExperience: user.fitnessExperience,
-    });
+  // The user should now be properly attached by the protect middleware
+  const user = await User.findById(req.user._id)
+    .select("-password")
+    .populate('purchasedDietPlans.planId', 'name subtitle price');
+  
+  if (!user) {
+    res.status(404);
+    throw new Error("User not found");
+  }
+
+  console.log('User profile found:', user.name);
+  console.log('Purchased diet plans:', user.purchasedDietPlans?.length || 0);
+
+  res.json({
+    _id: user._id,
+    name: user.name,
+    email: user.email,
+    weight: user.weight,
+    height: user.height,
+    goal: user.goal,
+    activityLevel: user.activityLevel,
+    dietPreference: user.dietPreference,
+    fitnessExperience: user.fitnessExperience,
+    purchasedDietPlans: user.purchasedDietPlans || [],
+    purchasedPlans: user.purchasedPlans || [],
+    viewedDietPlans: user.viewedDietPlans || [],
+    viewedPlans: user.viewedPlans || []
   });
+});
   
   
 

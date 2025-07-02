@@ -1,6 +1,6 @@
 import { Link, useLocation } from "react-router-dom";
 import { useNavigate } from "react-router-dom";
-import { Home, Dumbbell, Utensils, Camera,Bot, ChefHat,MessageCircle, LogOut, ChevronLeft, User, Zap, Star } from "lucide-react";
+import { Home, Dumbbell, Utensils, Camera, Bot, ChefHat, MessageCircle, LogOut, ChevronLeft, User, Zap, Star, Video } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useState } from "react";
 
@@ -21,6 +21,7 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
     { name: "Diet Plan", to: "/user-diet", icon: <Utensils className="w-5 h-5" />, color: "from-orange-500 to-red-500", bgColor: "bg-orange-500/10" },
     { name: "Food Scanner", to: "/user-scanner", icon: <Camera className="w-5 h-5" />, color: "from-purple-500 to-violet-500", bgColor: "bg-purple-500/10" },
     { name: "Recipe-generator", to: "/user-recipe-generator", icon: <ChefHat className="w-5 h-5" />, color: "from-pink-500 to-rose-500", bgColor: "bg-pink-500/10" },
+    { name: "Video Session", to: "/user/video-training", icon: <Video className="w-5 h-5" />, color: "from-teal-500 to-cyan-500", bgColor: "bg-teal-500/10" },
     { name: "Chatbot", to: "/user-chatbot", icon: <Bot className="w-5 h-5" />, color: "from-indigo-500 to-blue-500", bgColor: "bg-indigo-500/10" },
     
   ];

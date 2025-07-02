@@ -58,29 +58,56 @@ const Login = () => {
     e.preventDefault();
     setError("");
     setIsLoading(true);
-  
+
     try {
+      console.log('=== Login Attempt ===');
+      console.log('Email:', email);
+      console.log('Submitting to:', "http://localhost:5000/api/users/login");
+      
       const response = await fetch("http://localhost:5000/api/users/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password }),
       });
-  
+
+      console.log('Response status:', response.status);
       const data = await response.json();
-  
+      console.log('Response data:', data);
+
       if (!response.ok) {
         throw new Error(data.message || "Login failed");
       }
-  
-      // ✅ Store token correctly
-      localStorage.setItem("token", data.token); // Store only the token
-      localStorage.setItem("userInfo", JSON.stringify(data)); // Store user info separately
-  
-      console.log("Token Stored:", data.token); // Debugging
-  
-      // Redirect user to dashboard
-      navigate("/user-dashboard");
+
+      // Clear any existing tokens first
+      localStorage.removeItem("token");
+      localStorage.removeItem("userToken");
+      localStorage.removeItem("userInfo");
+
+      // ✅ Store token with both keys for compatibility
+      localStorage.setItem("token", data.token);
+      localStorage.setItem("userToken", data.token);
+      localStorage.setItem("userInfo", JSON.stringify(data));
+
+      console.log("=== After Login Storage ===");
+      console.log("Token stored as 'token':", localStorage.getItem("token"));
+      console.log("Token stored as 'userToken':", localStorage.getItem("userToken"));
+      console.log("User info stored:", localStorage.getItem("userInfo"));
+      console.log("==========================");
+
+      // Trigger storage event for other components
+      window.dispatchEvent(new StorageEvent('storage', {
+        key: 'userToken',
+        newValue: data.token
+      }));
+
+      // Small delay to ensure storage is complete
+      setTimeout(() => {
+        console.log("Navigating to dashboard...");
+        navigate("/user-dashboard");
+      }, 100);
+
     } catch (err) {
+      console.error("Login error:", err);
       setError(err.message);
     } finally {
       setIsLoading(false);

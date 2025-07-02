@@ -56,6 +56,30 @@ const CreateDietPlan = () => {
   const difficulties = ['Beginner', 'Intermediate', 'Advanced'];
 
   const handleInputChange = (field, value) => {
+    // Add file size validation for image uploads
+    if (field === 'image' && value) {
+      const maxSize = 8 * 1024 * 1024; // 8MB limit (less than server limit for safety)
+      if (value.size > maxSize) {
+        alert('Image file size must be less than 8MB. Please choose a smaller image or compress it.');
+        // Reset the file input
+        const fileInput = document.querySelector('input[type="file"]');
+        if (fileInput) fileInput.value = '';
+        return;
+      }
+      
+      // Check file type
+      const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
+      if (!allowedTypes.includes(value.type)) {
+        alert('Please select a valid image file (JPEG, PNG, GIF, or WebP).');
+        // Reset the file input
+        const fileInput = document.querySelector('input[type="file"]');
+        if (fileInput) fileInput.value = '';
+        return;
+      }
+      
+      console.log(`Selected image: ${value.name} (${(value.size / 1024 / 1024).toFixed(2)}MB)`);
+    }
+    
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
@@ -147,13 +171,29 @@ const CreateDietPlan = () => {
     try {
       const token = localStorage.getItem('creatorToken');
       
-      // Debug: Check if token exists
-      console.log('Creator token for submission:', token);
-      
       if (!token) {
         alert('Please login as a creator first');
         navigate('/creator-login');
         return;
+      }
+
+      // Validate required fields before submission
+      if (!formData.name || !formData.subtitle || !formData.category || 
+          !formData.difficulty || !formData.duration || !formData.description || 
+          !formData.preview || !detailedContent.overview) {
+        alert('Please fill in all required fields before submitting.');
+        setIsSubmitting(false);
+        return;
+      }
+
+      // Additional file validation before submission
+      if (formData.image) {
+        const maxSize = 8 * 1024 * 1024; // 8MB
+        if (formData.image.size > maxSize) {
+          alert('Image file is too large. Please select an image smaller than 8MB.');
+          setIsSubmitting(false);
+          return;
+        }
       }
 
       const formDataToSend = new FormData();
@@ -161,7 +201,10 @@ const CreateDietPlan = () => {
       // Add basic form data
       Object.keys(formData).forEach(key => {
         if (key === 'features' || key === 'tags') {
-          formDataToSend.append(key, formData[key].filter(item => item.trim()).join(','));
+          const arrayValue = formData[key].filter(item => item.trim());
+          if (arrayValue.length > 0) {
+            formDataToSend.append(key, arrayValue.join(','));
+          }
         } else if (key === 'image' && formData[key]) {
           formDataToSend.append(key, formData[key]);
         } else if (key !== 'image') {
@@ -173,6 +216,15 @@ const CreateDietPlan = () => {
       formDataToSend.append('detailedContent', JSON.stringify(detailedContent));
 
       console.log('Submitting to API...');
+      console.log('Form data summary:');
+      for (let [key, value] of formDataToSend.entries()) {
+        if (key === 'image') {
+          console.log(`${key}: File - ${value.name} (${(value.size / 1024 / 1024).toFixed(2)}MB)`);
+        } else {
+          console.log(`${key}:`, typeof value === 'string' && value.length > 100 ? value.substring(0, 100) + '...' : value);
+        }
+      }
+
       const response = await fetch('http://localhost:5000/api/dietPlans', {
         method: 'POST',
         headers: {
@@ -182,25 +234,59 @@ const CreateDietPlan = () => {
       });
 
       console.log('Response status:', response.status);
-
+      const contentType = response.headers.get('content-type');
+      console.log('Response content-type:', contentType);
+      
       if (response.ok) {
-        const result = await response.json();
-        console.log('Created diet plan:', result);
-        alert('Diet plan created successfully!');
-        navigate('/creator/diet-plans');
+        if (contentType && contentType.includes('application/json')) {
+          const result = await response.json();
+          console.log('Created diet plan:', result);
+          alert('Diet plan created successfully!');
+          navigate('/creator/diet-plans');
+        } else {
+          console.error('Expected JSON response but got:', contentType);
+          alert('Diet plan created but received unexpected response format');
+          navigate('/creator/diet-plans');
+        }
       } else {
-        const error = await response.json();
-        console.error('Error response:', error);
-        alert(error.message || 'Failed to create diet plan');
-        
-        if (response.status === 401) {
-          localStorage.removeItem('creatorToken');
-          navigate('/creator-login');
+        if (contentType && contentType.includes('application/json')) {
+          const error = await response.json();
+          console.error('Error response:', error);
+          alert(error.message || 'Failed to create diet plan');
+        } else {
+          const errorText = await response.text();
+          console.error('Non-JSON error response:', errorText.substring(0, 300));
+          
+          // Handle specific error cases
+          if (errorText.includes('MulterError: File too large')) {
+            alert('The uploaded image is too large. Please choose an image smaller than 8MB or compress your current image.');
+          } else if (errorText.includes('MulterError')) {
+            alert('File upload error. Please check your image file and try again.');
+          } else if (response.status === 413) {
+            alert('Request too large. Please reduce the image size or remove some content.');
+          } else if (response.status === 404) {
+            alert('API endpoint not found. Please check if the backend server is running.');
+          } else if (response.status === 401) {
+            alert('Authentication failed. Please login again.');
+            localStorage.removeItem('creatorToken');
+            navigate('/creator-login');
+          } else if (response.status === 500) {
+            alert('Server error occurred. Please try again or contact support.');
+          } else {
+            alert(`Failed to create diet plan. Server returned status: ${response.status}`);
+          }
         }
       }
     } catch (error) {
       console.error('Error creating diet plan:', error);
-      alert('Failed to create diet plan: ' + error.message);
+      
+      if (error.name === 'TypeError' && error.message.includes('fetch')) {
+        alert('Cannot connect to server. Please check if the backend is running on http://localhost:5000');
+      } else if (error.name === 'SyntaxError' && error.message.includes('JSON')) {
+        alert('Server returned invalid response format. Please check server logs.');
+      } else {
+        alert('Failed to create diet plan: ' + error.message);
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -332,12 +418,22 @@ const CreateDietPlan = () => {
 
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-2">Plan Image</label>
-        <input
-          type="file"
-          accept="image/*"
-          onChange={(e) => handleInputChange('image', e.target.files[0])}
-          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
-        />
+        <div className="space-y-2">
+          <input
+            type="file"
+            accept="image/*"
+            onChange={(e) => handleInputChange('image', e.target.files[0])}
+            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+          />
+          <p className="text-xs text-gray-500">
+            Maximum file size: 8MB. Supported formats: JPEG, PNG, GIF, WebP
+          </p>
+          {formData.image && (
+            <p className="text-sm text-green-600">
+              Selected: {formData.image.name} ({(formData.image.size / 1024 / 1024).toFixed(2)}MB)
+            </p>
+          )}
+        </div>
       </div>
 
       <div>

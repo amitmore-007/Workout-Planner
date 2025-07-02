@@ -14,6 +14,9 @@ const equipmentOptions = [
 ];
 
 const Dashboard = ({ plans, onCreateNew, onEditPlan, onDeletePlan }) => {
+  // Ensure plans is always an array
+  const plansArray = Array.isArray(plans) ? plans : [];
+
   return (
     <div className="min-h-screen bg-gray-100 p-4">
       <div className="max-w-6xl mx-auto">
@@ -27,13 +30,13 @@ const Dashboard = ({ plans, onCreateNew, onEditPlan, onDeletePlan }) => {
           </button>
         </div>
 
-        {plans.length === 0 ? (
+        {plansArray.length === 0 ? (
           <div className="text-center py-10">
             <p className="text-gray-500 mb-4">You haven't created any workout plans yet</p>
           </div>
         ) : (
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {plans.map((plan) => (
+            {plansArray.map((plan) => (
               <div key={plan._id} className="bg-white rounded-lg shadow overflow-hidden">
                 {plan.image && (
                   <img
@@ -107,7 +110,12 @@ const CreatePlanForm = ({ onPlanCreated, onCancel, editingPlanId }) => {
       // Load existing plan data if editing
       const fetchPlanData = async () => {
         try {
-          const res = await fetch(`http://localhost:5000/api/workoutPlans/${editingPlanId}`);
+          const token = localStorage.getItem('creatorToken');
+          const res = await fetch(`http://localhost:5000/api/workoutPlans/creator/${editingPlanId}`, {
+            headers: {
+              'Authorization': `Bearer ${token}`
+            }
+          });
           if (res.ok) {
             const data = await res.json();
             setFormData({
@@ -116,8 +124,8 @@ const CreatePlanForm = ({ onPlanCreated, onCancel, editingPlanId }) => {
               description: data.description,
               difficulty: data.difficulty,
               totalDuration: data.totalDuration,
-              tags: data.tags,
-              image: data.image,
+              tags: Array.isArray(data.tags) ? data.tags.join(',') : data.tags,
+              image: null, // Don't set existing image file
               videoPreview: data.videoPreview
             });
             if (data.image) setPreviewImage(data.image);
@@ -149,20 +157,32 @@ const CreatePlanForm = ({ onPlanCreated, onCancel, editingPlanId }) => {
   };
 
   const handleCreatePlan = async () => {
+    const token = localStorage.getItem('creatorToken');
+    
+    if (!token) {
+      alert('Please login as a creator first');
+      return;
+    }
+
     const form = new FormData();
     Object.entries(formData).forEach(([key, value]) => {
-      form.append(key, value);
+      if (value !== null && value !== '') {
+        form.append(key, value);
+      }
     });
 
     try {
       const endpoint = editingPlanId 
-        ? `http://localhost:5000/api/workoutPlans/update/${editingPlanId}`
-        : "http://localhost:5000/api/workoutPlans/create";
+        ? `http://localhost:5000/api/workoutPlans/${editingPlanId}`
+        : "http://localhost:5000/api/workoutPlans";
       
       const method = editingPlanId ? "PUT" : "POST";
 
       const res = await fetch(endpoint, {
         method,
+        headers: {
+          'Authorization': `Bearer ${token}`
+        },
         body: form,
       });
 
@@ -170,9 +190,14 @@ const CreatePlanForm = ({ onPlanCreated, onCancel, editingPlanId }) => {
         const plan = await res.json();
         setCreatedPlanId(plan._id);
         setFormStep(2);
+      } else {
+        const error = await res.json();
+        console.error('Error creating plan:', error);
+        alert('Failed to create plan: ' + (error.error || error.message || 'Unknown error'));
       }
     } catch (error) {
-      console.error(error);
+      console.error('Network error:', error);
+      alert('Network error: ' + error.message);
     }
   };
 
@@ -507,13 +532,37 @@ const WorkoutPlansPage = () => {
   useEffect(() => {
     const fetchPlans = async () => {
       try {
-        const res = await fetch("http://localhost:5000/api/workoutPlans");
+        const token = localStorage.getItem('creatorToken');
+        
+        if (!token) {
+          console.error('No creator token found');
+          setPlans([]);
+          setIsLoading(false);
+          return;
+        }
+
+        const res = await fetch("http://localhost:5000/api/workoutPlans/creator", {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        
         if (res.ok) {
           const data = await res.json();
-          setPlans(data);
+          setPlans(Array.isArray(data) ? data : []);
+        } else {
+          const errorData = await res.json().catch(() => ({}));
+          console.error('Failed to fetch plans:', res.status, errorData);
+          setPlans([]);
+          
+          if (res.status === 401) {
+            localStorage.removeItem('creatorToken');
+            // Redirect to login or show login modal
+          }
         }
       } catch (error) {
-        console.error(error);
+        console.error('Error fetching plans:', error);
+        setPlans([]);
       } finally {
         setIsLoading(false);
       }
@@ -524,7 +573,7 @@ const WorkoutPlansPage = () => {
 
   const handlePlanCreated = (newPlan) => {
     if (newPlan) {
-      setPlans(prev => [...prev, newPlan]);
+      setPlans(prev => Array.isArray(prev) ? [...prev, newPlan] : [newPlan]);
     }
     setShowForm(false);
     setEditingPlanId(null);
@@ -538,15 +587,24 @@ const WorkoutPlansPage = () => {
   const handleDeletePlan = async (planId) => {
     if (window.confirm("Are you sure you want to delete this plan?")) {
       try {
-        const res = await fetch(`http://localhost:5000/api/workoutPlans/delete/${planId}`, {
-          method: "DELETE"
+        const token = localStorage.getItem('creatorToken');
+        const res = await fetch(`http://localhost:5000/api/workoutPlans/${planId}`, {
+          method: "DELETE",
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
         });
         
         if (res.ok) {
-          setPlans(prev => prev.filter(plan => plan._id !== planId));
+          setPlans(prev => Array.isArray(prev) ? prev.filter(plan => plan._id !== planId) : []);
+          alert('Plan deleted successfully');
+        } else {
+          const error = await res.json();
+          alert('Failed to delete plan: ' + (error.error || 'Unknown error'));
         }
       } catch (error) {
         console.error(error);
+        alert('Error deleting plan: ' + error.message);
       }
     }
   };
