@@ -26,7 +26,7 @@ const CreatorDashboard = () => {
       icon: Salad,
       color: "bg-gradient-to-br from-green-500 to-lime-500",
       hoverColor: "from-green-600 to-lime-600",
-      route: "/creator/create-diet",
+      route: "/creator/diet-plans",
     },
     {
       id: "video-support",

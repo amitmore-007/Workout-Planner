@@ -113,18 +113,23 @@ const FoodScanner = () => {
     const percentage = Math.min((value / max) * 100, 100);
     
     return (
-      <div className="mb-3">
-        <div className="flex justify-between mb-1">
-          <span className="text-sm text-white/80">{label}</span>
-          <span className="text-sm text-white/80">{value}g</span>
+      <div className="mb-4">
+        <div className="flex justify-between mb-2">
+          <span className="text-sm text-gray-300 font-medium">{label}</span>
+          <span className="text-sm text-white font-semibold">{value}g</span>
         </div>
-        <div className="h-2 bg-white/10 rounded-full">
+        <div className="h-3 bg-gray-800/60 rounded-full border border-gray-700/50 overflow-hidden">
           <motion.div 
             initial={{ width: 0 }}
             animate={{ width: `${percentage}%` }}
-            transition={{ duration: 0.8, ease: "easeOut" }}
-            className={`h-full rounded-full ${color}`}
-          />
+            transition={{ duration: 1.2, ease: "easeOut" }}
+            className={`h-full rounded-full ${color} shadow-lg relative`}
+            style={{
+              boxShadow: `0 0 10px ${color.includes('cyan') ? '#00f5ff' : color.includes('green') ? '#00ff88' : color.includes('yellow') ? '#ffed4e' : '#ff006e'}`
+            }}
+          >
+            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent animate-pulse" />
+          </motion.div>
         </div>
       </div>
     );
@@ -134,41 +139,51 @@ const FoodScanner = () => {
 const FoodCard = ({ food, index, onClick, isSelected }) => {
   return (
     <motion.div 
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: 0.2 + (index * 0.1) }}
+      initial={{ opacity: 0, y: 30, scale: 0.9 }}
+      animate={{ opacity: 1, y: 0, scale: 1 }}
+      transition={{ delay: 0.1 + (index * 0.1), type: "spring", stiffness: 100 }}
+      whileHover={{ scale: 1.02, rotateY: 2 }}
       onClick={onClick}
-      className={`cursor-pointer p-5 ${isSelected ? 'bg-white/20' : 'bg-white/10'} backdrop-blur-sm rounded-xl border ${isSelected ? 'border-cyan-300/50' : 'border-white/10'} shadow-lg hover:shadow-xl transition-all hover:scale-102 mb-4`}
+      className={`cursor-pointer p-6 ${isSelected ? 'bg-gray-800/80 border-cyan-400/60' : 'bg-gray-900/60 border-gray-700/30'} backdrop-blur-xl rounded-2xl border-2 shadow-2xl hover:shadow-cyan-500/10 transition-all duration-300 mb-4 relative overflow-hidden group`}
     >
-      <div className="flex justify-between items-center mb-2">
-        <h3 className="text-lg font-semibold text-white">
-          {(food.quantity && food.quantity > 1) ? `${food.quantity}× ${food.name}` : food.name}
-        </h3>
-        <div className={`px-3 py-1 rounded-full text-xs font-medium ${food.isHealthy ? 'bg-green-500/20 text-green-300' : 'bg-pink-500/20 text-pink-300'}`}>
-          {food.isHealthy ? 'Healthy' : 'Not Healthy'}
-        </div>
-      </div>
+      {/* Animated background effect */}
+      <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/5 via-transparent to-purple-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
       
-      <div className="flex items-center justify-between">
-        <div className="flex items-center">
-          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-500/30 to-pink-500/30 flex items-center justify-center mr-3">
-            <span className="text-white font-bold">{food.calories}</span>
+      {/* Neon corner accents */}
+      <div className="absolute top-0 left-0 w-8 h-8 border-l-2 border-t-2 border-cyan-400/40 rounded-tl-2xl" />
+      <div className="absolute bottom-0 right-0 w-8 h-8 border-r-2 border-b-2 border-purple-400/40 rounded-br-2xl" />
+      
+      <div className="relative z-10">
+        <div className="flex justify-between items-center mb-4">
+          <h3 className="text-xl font-bold text-white">
+            {(food.quantity && food.quantity > 1) ? `${food.quantity}× ${food.name}` : food.name}
+          </h3>
+          <div className={`px-4 py-2 rounded-full text-xs font-bold ${food.isHealthy ? 'bg-gradient-to-r from-green-500/20 to-emerald-500/20 text-green-300 border border-green-500/30' : 'bg-gradient-to-r from-red-500/20 to-pink-500/20 text-red-300 border border-red-500/30'} backdrop-blur-sm`}>
+            {food.isHealthy ? '✓ HEALTHY' : '⚠ CAUTION'}
           </div>
-          <div className="text-white/70 text-sm">calories</div>
         </div>
         
-        <div className="flex space-x-3">
-          <div className="text-center">
-            <div className="text-sm font-semibold text-white">{food.protein}g</div>
-            <div className="text-xs text-white/60">Protein</div>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center">
+            <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-cyan-500/30 via-purple-500/30 to-pink-500/30 flex items-center justify-center mr-4 border border-gray-600/50 shadow-lg">
+              <span className="text-white font-bold text-lg">{food.calories}</span>
+            </div>
+            <div className="text-gray-300 text-sm font-medium">CALORIES</div>
           </div>
-          <div className="text-center">
-            <div className="text-sm font-semibold text-white">{food.carbs}g</div>
-            <div className="text-xs text-white/60">Carbs</div>
-          </div>
-          <div className="text-center">
-            <div className="text-sm font-semibold text-white">{food.fats}g</div>
-            <div className="text-xs text-white/60">Fats</div>
+          
+          <div className="flex space-x-4">
+            <div className="text-center">
+              <div className="text-lg font-bold text-green-400">{food.protein}g</div>
+              <div className="text-xs text-gray-400 font-medium">PROTEIN</div>
+            </div>
+            <div className="text-center">
+              <div className="text-lg font-bold text-blue-400">{food.carbs}g</div>
+              <div className="text-xs text-gray-400 font-medium">CARBS</div>
+            </div>
+            <div className="text-center">
+              <div className="text-lg font-bold text-yellow-400">{food.fats}g</div>
+              <div className="text-xs text-gray-400 font-medium">FATS</div>
+            </div>
           </div>
         </div>
       </div>
@@ -180,60 +195,84 @@ const FoodCard = ({ food, index, onClick, isSelected }) => {
   const FoodDetailPanel = ({ food }) => {
     return (
       <motion.div
-        initial={{ opacity: 0, height: 0 }}
-        animate={{ opacity: 1, height: 'auto' }}
-        exit={{ opacity: 0, height: 0 }}
-        transition={{ duration: 0.3 }}
-        className="bg-gradient-to-br from-cyan-900/30 to-purple-900/30 backdrop-blur-sm rounded-xl border border-white/10 p-6 mb-6"
+        initial={{ opacity: 0, height: 0, scale: 0.95 }}
+        animate={{ opacity: 1, height: 'auto', scale: 1 }}
+        exit={{ opacity: 0, height: 0, scale: 0.95 }}
+        transition={{ duration: 0.4, type: "spring", stiffness: 100 }}
+        className="bg-gray-900/80 backdrop-blur-2xl rounded-3xl border-2 border-gray-700/50 p-8 mb-6 relative overflow-hidden shadow-2xl"
       >
-        <h3 className="text-xl font-bold text-white mb-4 flex items-center">
-          <Sparkles className="mr-2 text-cyan-300" size={18} /> 
-          {food.name} Nutritional Breakdown
-        </h3>
+        {/* Animated background patterns */}
+        <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/5 via-purple-500/5 to-pink-500/5" />
+        <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-cyan-400/10 to-transparent rounded-full blur-2xl" />
+        <div className="absolute bottom-0 left-0 w-24 h-24 bg-gradient-to-tr from-purple-400/10 to-transparent rounded-full blur-2xl" />
         
-        <div className="grid md:grid-cols-2 gap-6">
-          <div>
-            <div className="mb-6">
-              <div className="text-lg font-semibold text-white mb-2">Macronutrients</div>
-              <NutritionBar label="Protein" value={food.protein} color="bg-green-400" />
-              <NutritionBar label="Carbs" value={food.carbs} color="bg-blue-400" />
-              <NutritionBar label="Fats" value={food.fats} color="bg-yellow-400" />
-              {food.fiber !== undefined && (
-                <NutritionBar label="Fiber" value={food.fiber} color="bg-amber-400" max={30} />
-              )}
-              {food.sugar !== undefined && (
-                <NutritionBar label="Sugar" value={food.sugar} color="bg-pink-400" max={50} />
-              )}
+        <div className="relative z-10">
+          <h3 className="text-2xl font-bold text-white mb-6 flex items-center">
+            <div className="w-8 h-8 bg-gradient-to-br from-cyan-400 to-purple-400 rounded-lg flex items-center justify-center mr-3">
+              <Sparkles className="text-white" size={18} />
             </div>
-            
-            <div className="p-4 bg-white/10 rounded-lg">
-              <div className="text-lg font-semibold text-white mb-2">Calories</div>
-              <div className="flex items-center">
-                <div className="w-16 h-16 rounded-full bg-gradient-to-br from-cyan-500/40 to-pink-500/40 flex items-center justify-center mr-4">
-                  <span className="text-white text-xl font-bold">{food.calories}</span>
-                </div>
-                <div className="text-white/70">Total Calories</div>
-              </div>
-            </div>
-          </div>
+            {food.name} - Detailed Analysis
+          </h3>
           
-          <div>
-            <div className="text-lg font-semibold text-white mb-2">Health Assessment</div>
-            <div className={`p-4 rounded-lg ${food.isHealthy ? 'bg-green-500/20' : 'bg-pink-500/20'} mb-4`}>
-              <div className={`text-lg font-semibold mb-2 ${food.isHealthy ? 'text-green-300' : 'text-pink-300'}`}>
-                {food.isHealthy ? 'Healthy Choice' : 'Health Consideration'}
+          <div className="grid md:grid-cols-2 gap-8">
+            <div>
+              <div className="mb-8">
+                <div className="text-xl font-bold text-white mb-4 flex items-center">
+                  <div className="w-2 h-6 bg-gradient-to-b from-cyan-400 to-purple-400 rounded-full mr-3" />
+                  Macronutrients
+                </div>
+                <NutritionBar label="Protein" value={food.protein} color="bg-gradient-to-r from-green-400 to-emerald-400" />
+                <NutritionBar label="Carbs" value={food.carbs} color="bg-gradient-to-r from-blue-400 to-cyan-400" />
+                <NutritionBar label="Fats" value={food.fats} color="bg-gradient-to-r from-yellow-400 to-orange-400" />
+                {food.fiber !== undefined && (
+                  <NutritionBar label="Fiber" value={food.fiber} color="bg-gradient-to-r from-amber-400 to-yellow-400" max={30} />
+                )}
+                {food.sugar !== undefined && (
+                  <NutritionBar label="Sugar" value={food.sugar} color="bg-gradient-to-r from-pink-400 to-red-400" max={50} />
+                )}
               </div>
-              <p className="text-white/80">{food.healthReason}</p>
+              
+              <div className="p-6 bg-gray-800/60 rounded-2xl border border-gray-700/50 backdrop-blur-sm">
+                <div className="text-xl font-bold text-white mb-4 flex items-center">
+                  <Zap className="mr-2 text-yellow-400" size={20} />
+                  Energy Content
+                </div>
+                <div className="flex items-center">
+                  <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-cyan-500/40 via-purple-500/40 to-pink-500/40 flex items-center justify-center mr-6 border border-gray-600/50 shadow-lg">
+                    <span className="text-white text-2xl font-bold">{food.calories}</span>
+                  </div>
+                  <div>
+                    <div className="text-gray-300 text-lg font-medium">Total Calories</div>
+                    <div className="text-gray-400 text-sm">Energy per serving</div>
+                  </div>
+                </div>
+              </div>
             </div>
             
-            <motion.button
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-              onClick={() => setSelectedFood(null)}
-              className="w-full bg-white/10 hover:bg-white/20 text-white py-2 rounded-lg font-medium transition-colors mt-2 border border-white/20"
-            >
-              Back to All Foods
-            </motion.button>
+            <div>
+              <div className="text-xl font-bold text-white mb-4 flex items-center">
+                <div className="w-2 h-6 bg-gradient-to-b from-green-400 to-blue-400 rounded-full mr-3" />
+                Health Assessment
+              </div>
+              <div className={`p-6 rounded-2xl ${food.isHealthy ? 'bg-gradient-to-br from-green-500/20 to-emerald-500/20 border-green-500/30' : 'bg-gradient-to-br from-red-500/20 to-pink-500/20 border-red-500/30'} border-2 mb-6 backdrop-blur-sm relative overflow-hidden`}>
+                {/* Subtle animated background */}
+                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent animate-pulse" />
+                
+                <div className={`text-xl font-bold mb-3 ${food.isHealthy ? 'text-green-300' : 'text-red-300'} relative z-10`}>
+                  {food.isHealthy ? '✓ Healthy Choice' : '⚠ Health Consideration'}
+                </div>
+                <p className="text-gray-200 leading-relaxed relative z-10">{food.healthReason}</p>
+              </div>
+              
+              <motion.button
+                whileHover={{ scale: 1.02, boxShadow: "0 0 20px rgba(34, 211, 238, 0.3)" }}
+                whileTap={{ scale: 0.98 }}
+                onClick={() => setSelectedFood(null)}
+                className="w-full bg-gradient-to-r from-gray-800/80 to-gray-700/80 hover:from-gray-700/80 hover:to-gray-600/80 text-white py-4 rounded-2xl font-bold transition-all duration-300 border border-gray-600/50 backdrop-blur-sm shadow-lg"
+              >
+                ← Back to All Foods
+              </motion.button>
+            </div>
           </div>
         </div>
       </motion.div>
@@ -300,31 +339,37 @@ const FoodCard = ({ food, index, onClick, isSelected }) => {
   };
 
   return (
-    <div className="min-h-screen relative overflow-hidden bg-gradient-to-br from-indigo-900 via-purple-900 to-pink-800 p-6">
-      {/* Animated background elements */}
+    <div className="min-h-screen relative overflow-hidden bg-gradient-to-br from-black via-gray-900 to-black p-6">
+      {/* Enhanced background effects */}
       <div className="absolute inset-0 overflow-hidden">
-        {/* Animated gradient overlay */}
-        <div className="absolute inset-0 bg-gradient-to-tr from-indigo-900/50 via-transparent to-fuchsia-900/30 animate-pulse" 
-             style={{animationDuration: '8s'}} />
+        {/* Animated grid pattern */}
+        <div className="absolute inset-0 opacity-10">
+          <div className="absolute inset-0" style={{
+            backgroundImage: `
+              linear-gradient(rgba(34, 211, 238, 0.1) 1px, transparent 1px),
+              linear-gradient(90deg, rgba(34, 211, 238, 0.1) 1px, transparent 1px)
+            `,
+            backgroundSize: '50px 50px',
+          }} />
+        </div>
         
-        {/* Floating bubbles */}
-        {[...Array(bubbleCount)].map((_, index) => (
+        {/* Floating particles */}
+        {[...Array(20)].map((_, index) => (
           <motion.div
             key={index}
-            className="absolute rounded-full bg-gradient-to-br from-white/10 to-white/5 backdrop-blur-sm"
+            className="absolute w-1 h-1 bg-cyan-400/60 rounded-full"
             style={{
-              width: Math.random() * 100 + 50,
-              height: Math.random() * 100 + 50,
               left: `${Math.random() * 100}%`,
               top: `${Math.random() * 100}%`,
             }}
             animate={{
-              x: [0, Math.random() * 100 - 50],
-              y: [0, Math.random() * 100 - 50],
-              opacity: [0.3, 0.7, 0.3],
+              x: [0, Math.random() * 200 - 100],
+              y: [0, Math.random() * 200 - 100],
+              opacity: [0.2, 0.8, 0.2],
+              scale: [0.5, 1.5, 0.5],
             }}
             transition={{
-              duration: Math.random() * 20 + 15,
+              duration: Math.random() * 10 + 10,
               repeat: Infinity,
               repeatType: 'reverse',
               ease: 'easeInOut',
@@ -332,9 +377,37 @@ const FoodCard = ({ food, index, onClick, isSelected }) => {
           />
         ))}
 
-        {/* Light rays */}
-        <div className="absolute top-0 left-1/4 w-1/2 h-screen bg-gradient-to-b from-purple-500/10 to-transparent transform -rotate-45 blur-3xl"></div>
-        <div className="absolute top-0 right-1/4 w-1/2 h-screen bg-gradient-to-b from-blue-400/10 to-transparent transform rotate-45 blur-3xl"></div>
+        {/* Geometric shapes */}
+        {[...Array(8)].map((_, index) => (
+          <motion.div
+            key={`geo-${index}`}
+            className="absolute border border-cyan-400/20"
+            style={{
+              width: Math.random() * 100 + 50,
+              height: Math.random() * 100 + 50,
+              left: `${Math.random() * 100}%`,
+              top: `${Math.random() * 100}%`,
+              borderRadius: Math.random() > 0.5 ? '50%' : '0%',
+            }}
+            animate={{
+              rotate: [0, 360],
+              scale: [0.8, 1.2, 0.8],
+              opacity: [0.1, 0.3, 0.1],
+            }}
+            transition={{
+              duration: Math.random() * 20 + 15,
+              repeat: Infinity,
+              ease: 'linear',
+            }}
+          />
+        ))}
+
+        {/* Enhanced light rays */}
+        <div className="absolute top-0 left-1/4 w-1/2 h-screen bg-gradient-to-b from-cyan-500/5 to-transparent transform -rotate-45 blur-3xl"></div>
+        <div className="absolute top-0 right-1/4 w-1/2 h-screen bg-gradient-to-b from-purple-500/5 to-transparent transform rotate-45 blur-3xl"></div>
+        
+        {/* Radial gradient overlay */}
+        <div className="absolute inset-0 bg-gradient-radial from-transparent via-gray-900/20 to-black/40" />
       </div>
 
       {/* Main content */}
@@ -342,90 +415,108 @@ const FoodCard = ({ food, index, onClick, isSelected }) => {
         <motion.div 
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-          className="max-w-4xl mx-auto"
+          transition={{ duration: 0.8 }}
+          className="max-w-6xl mx-auto"
         >
-          {/* Floating header with glass effect */}
+          {/* Enhanced floating header */}
           <motion.div 
-            initial={{ y: -20 }}
-            animate={{ y: 0 }}
-            transition={{ delay: 0.2, type: "spring", stiffness: 120 }}
-            className="flex items-center justify-between mb-8 bg-white/10 backdrop-blur-lg rounded-2xl p-4 shadow-lg border border-white/20"
+            initial={{ y: -30, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ delay: 0.2, type: "spring", stiffness: 100 }}
+            className="flex items-center justify-between mb-10 bg-gray-900/60 backdrop-blur-2xl rounded-3xl p-6 shadow-2xl border border-gray-700/50 relative overflow-hidden"
           >
+            {/* Header background effect */}
+            <div className="absolute inset-0 bg-gradient-to-r from-cyan-500/5 via-purple-500/5 to-pink-500/5" />
+            
             <motion.h1 
-              className="text-3xl md:text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-cyan-300 to-pink-300"
-              animate={{ textShadow: ["0 0 5px rgba(255,255,255,0.3)", "0 0 15px rgba(255,255,255,0.5)", "0 0 5px rgba(255,255,255,0.3)"] }}
-              transition={{ duration: 2, repeat: Infinity }}
+              className="text-4xl md:text-5xl font-black bg-clip-text text-transparent bg-gradient-to-r from-cyan-300 via-purple-300 to-pink-300 relative z-10"
+              animate={{ 
+                backgroundPosition: ["0% 50%", "100% 50%", "0% 50%"],
+              }}
+              transition={{ duration: 4, repeat: Infinity }}
+              style={{ backgroundSize: "200% 200%" }}
             >
               NutriScan AI
             </motion.h1>
-            <div className="hidden md:flex space-x-3">
+            
+            <div className="hidden md:flex space-x-4 relative z-10">
               {[
-                { icon: <Sparkles size={16} className="text-cyan-300" />, text: "AI Powered" },
-                { icon: <Zap size={16} className="text-pink-300" />, text: "Instant Results" },
-                { icon: <Beaker size={16} className="text-purple-300" />, text: "Precise Analysis" }
+                { icon: <Sparkles size={18} className="text-cyan-400" />, text: "AI Powered", color: "from-cyan-500/20 to-blue-500/20 border-cyan-500/30" },
+                { icon: <Zap size={18} className="text-yellow-400" />, text: "Instant Results", color: "from-yellow-500/20 to-orange-500/20 border-yellow-500/30" },
+                { icon: <Beaker size={18} className="text-purple-400" />, text: "Precise Analysis", color: "from-purple-500/20 to-pink-500/20 border-purple-500/30" }
               ].map((item, i) => (
                 <motion.div 
                   key={i}
-                  initial={{ scale: 0.9, opacity: 0 }}
+                  initial={{ scale: 0.8, opacity: 0 }}
                   animate={{ scale: 1, opacity: 1 }}
-                  transition={{ delay: 0.3 + (i * 0.1) }}
-                  className="px-4 py-2 bg-white/10 backdrop-blur rounded-full shadow-md flex items-center space-x-2 border border-white/20"
+                  transition={{ delay: 0.4 + (i * 0.1), type: "spring", stiffness: 120 }}
+                  whileHover={{ scale: 1.05, y: -2 }}
+                  className={`px-5 py-3 bg-gradient-to-r ${item.color} backdrop-blur-sm rounded-2xl shadow-lg flex items-center space-x-3 border font-bold text-white`}
                 >
                   {item.icon}
-                  <span className="text-sm font-medium text-white">{item.text}</span>
+                  <span className="text-sm">{item.text}</span>
                 </motion.div>
               ))}
             </div>
           </motion.div>
 
-          <div className="grid md:grid-cols-5 gap-6">
-            {/* Left Section */}
+          <div className="grid md:grid-cols-5 gap-8">
+            {/* Enhanced Left Section */}
             <motion.div 
-              initial={{ opacity: 0, x: -20 }}
+              initial={{ opacity: 0, x: -30 }}
               animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.3 }}
-              className="md:col-span-2 bg-white/10 backdrop-blur-lg rounded-2xl shadow-xl overflow-hidden border border-white/20"
+              transition={{ delay: 0.4, type: "spring", stiffness: 100 }}
+              className="md:col-span-2 bg-gray-900/60 backdrop-blur-2xl rounded-3xl shadow-2xl overflow-hidden border border-gray-700/50 relative"
             >
+              <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/5 via-transparent to-purple-500/5" />
+              
               <div 
-                className={`relative flex flex-col h-96 md:h-full ${previewUrl ? '' : 'border-2 border-dashed'} ${dragActive ? 'border-cyan-300 bg-white/5' : 'border-white/30'}`}
+                className={`relative flex flex-col h-96 md:h-full ${previewUrl ? '' : 'border-2 border-dashed'} ${dragActive ? 'border-cyan-400/60 bg-cyan-500/5' : 'border-gray-600/50'} rounded-3xl`}
                 onDragEnter={handleDrag}
                 onDragLeave={handleDrag}
                 onDragOver={handleDrag}
                 onDrop={handleDrop}
               >
                 {previewUrl ? (
-                  <div className="relative flex-grow flex items-center justify-center p-4">
-                    <img 
+                  <div className="relative flex-grow flex items-center justify-center p-6">
+                    <motion.img 
+                      initial={{ scale: 0.8, opacity: 0 }}
+                      animate={{ scale: 1, opacity: 1 }}
+                      transition={{ duration: 0.5 }}
                       src={previewUrl} 
                       alt="Food preview" 
-                      className="max-w-full max-h-full object-contain rounded-lg shadow-lg" 
+                      className="max-w-full max-h-full object-contain rounded-2xl shadow-2xl border border-gray-600/30" 
                     />
-                    <button 
+                    <motion.button 
+                      whileHover={{ scale: 1.1, rotate: 90 }}
+                      whileTap={{ scale: 0.9 }}
                       onClick={clearImage}
-                      className="absolute top-6 right-6 bg-black/50 text-white p-2 rounded-full shadow-lg hover:bg-black/70 transition-colors backdrop-blur-sm"
+                      className="absolute top-8 right-8 bg-gray-900/80 text-white p-3 rounded-full shadow-2xl hover:bg-red-500/80 transition-all duration-300 backdrop-blur-sm border border-gray-600/50"
                     >
-                      <X size={16} />
-                    </button>
+                      <X size={20} />
+                    </motion.button>
                   </div>
                 ) : (
-                  <div className="p-8 flex flex-col items-center justify-center h-full">
+                  <div className="p-10 flex flex-col items-center justify-center h-full relative z-10">
                     <motion.div 
-                      whileHover={{ scale: 1.05, rotate: [0, 5, -5, 0] }} 
+                      whileHover={{ scale: 1.1, rotate: [0, 5, -5, 0] }} 
                       whileTap={{ scale: 0.95 }}
-                      className="w-24 h-24 bg-gradient-to-br from-cyan-400/30 to-purple-400/30 rounded-full flex items-center justify-center mb-4 backdrop-blur-sm border border-white/20"
+                      className="w-28 h-28 bg-gradient-to-br from-cyan-500/30 via-purple-500/30 to-pink-500/30 rounded-3xl flex items-center justify-center mb-6 backdrop-blur-sm border border-gray-600/50 shadow-2xl relative overflow-hidden"
                     >
-                      <Camera size={40} className="text-white" />
+                      <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent animate-pulse" />
+                      <Camera size={48} className="text-white relative z-10" />
                     </motion.div>
-                    <h3 className="text-xl font-semibold text-white mb-2">Upload Food Image</h3>
-                    <p className="text-white/70 text-center mb-6">Drag & drop or click to select</p>
+                    <h3 className="text-2xl font-bold text-white mb-3">Upload Food Image</h3>
+                    <p className="text-gray-400 text-center mb-8 font-medium">Drag & drop your image or click to browse</p>
                     <motion.button
-                      whileHover={{ scale: 1.03, boxShadow: "0 0 15px rgba(139, 92, 246, 0.5)" }}
-                      whileTap={{ scale: 0.98 }}
+                      whileHover={{ scale: 1.05, boxShadow: "0 0 30px rgba(34, 211, 238, 0.4)" }}
+                      whileTap={{ scale: 0.95 }}
                       onClick={() => fileInputRef.current.click()}
-                      className="bg-gradient-to-r from-cyan-500 to-purple-500 text-white px-6 py-3 rounded-full font-medium shadow-lg border border-white/20 flex items-center"
+                      className="bg-gradient-to-r from-cyan-500 via-purple-500 to-pink-500 text-white px-8 py-4 rounded-2xl font-bold shadow-2xl border border-gray-600/30 flex items-center relative overflow-hidden"
                     >
-                      <Upload size={18} className="mr-2" /> Select Image
+                      <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent animate-pulse" />
+                      <Upload size={20} className="mr-3 relative z-10" /> 
+                      <span className="relative z-10">Select Image</span>
                     </motion.button>
                     <input
                       ref={fileInputRef}
@@ -439,89 +530,89 @@ const FoodCard = ({ food, index, onClick, isSelected }) => {
               </div>
             </motion.div>
 
-            {/* Right Section */}
+            {/* Enhanced Right Section */}
             <motion.div 
-              initial={{ opacity: 0, x: 20 }}
+              initial={{ opacity: 0, x: 30 }}
               animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.4 }}
+              transition={{ delay: 0.5, type: "spring", stiffness: 100 }}
               className="md:col-span-3"
             >
-              {/* Analysis Button */}
+              {/* Enhanced Analysis Button */}
               {file && !loading && !result && (
                 <motion.div
-                  initial={{ opacity: 0, y: 10 }}
+                  initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className="mb-6"
+                  className="mb-8"
                 >
                   <motion.button
-                    whileHover={{ scale: 1.02, boxShadow: "0 0 20px rgba(236, 72, 153, 0.5)" }}
+                    whileHover={{ scale: 1.02, boxShadow: "0 0 40px rgba(34, 211, 238, 0.4)" }}
                     whileTap={{ scale: 0.98 }}
                     onClick={handleUpload}
-                    className="w-full bg-gradient-to-r from-cyan-500 via-purple-500 to-pink-500 text-white py-4 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-shadow flex items-center justify-center border border-white/20"
+                    className="w-full bg-gradient-to-r from-cyan-500 via-purple-500 to-pink-500 text-white py-5 rounded-2xl font-bold shadow-2xl hover:shadow-cyan-500/20 transition-all duration-300 flex items-center justify-center border border-gray-600/30 relative overflow-hidden text-lg"
                   >
+                    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent animate-pulse" />
                     <motion.div 
-                      animate={{ 
-                        textShadow: ["0 0 0px #fff", "0 0 10px #fff", "0 0 0px #fff"] 
-                      }}
-                      transition={{ duration: 1.5, repeat: Infinity }}
-                      className="flex items-center"
+                      animate={{ scale: [1, 1.05, 1] }}
+                      transition={{ duration: 2, repeat: Infinity }}
+                      className="flex items-center relative z-10"
                     >
-                      <span className="mr-2">Analyze Food</span>
-                      <Award size={18} />
+                      <Award className="mr-3" size={24} />
+                      <span>🚀 Analyze Food with AI</span>
                     </motion.div>
                   </motion.button>
                 </motion.div>
               )}
 
-              {/* Loading animation */}
+              {/* Enhanced loading animation */}
               <AnimatePresence>
                 {loading && (
                   <motion.div 
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                    className="bg-white/10 backdrop-blur-lg rounded-2xl shadow-xl p-8 flex flex-col items-center border border-white/20"
+                    initial={{ opacity: 0, scale: 0.9 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.9 }}
+                    className="bg-gray-900/80 backdrop-blur-2xl rounded-3xl shadow-2xl p-10 flex flex-col items-center border border-gray-700/50 relative overflow-hidden"
                   >
-                    <div className="w-full mb-6">
-                      <div className="h-2 bg-white/20 rounded-full overflow-hidden">
+                    {/* Loading background effects */}
+                    <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/5 via-purple-500/5 to-pink-500/5" />
+                    
+                    <div className="w-full mb-8 relative z-10">
+                      <div className="h-3 bg-gray-800/60 rounded-full overflow-hidden border border-gray-700/50">
                         <motion.div 
                           initial={{ width: "0%" }}
                           animate={{ 
                             width: ["0%", "100%"],
-                            background: ["linear-gradient(to right, #22d3ee, #a855f7)", "linear-gradient(to right, #a855f7, #ec4899)", "linear-gradient(to right, #ec4899, #22d3ee)"]
+                            background: [
+                              "linear-gradient(to right, #22d3ee, #a855f7)", 
+                              "linear-gradient(to right, #a855f7, #ec4899)", 
+                              "linear-gradient(to right, #ec4899, #22d3ee)"
+                            ]
                           }}
                           transition={{ 
-                            duration: 2, 
+                            duration: 3, 
                             ease: "easeInOut",
                             background: { duration: 2, repeat: Infinity, repeatType: "reverse" }
                           }}
-                          className="h-full"
+                          className="h-full rounded-full shadow-lg"
                         />
                       </div>
                     </div>
                     
-                    <div className="flex flex-col items-center">
-                      <div className="relative w-20 h-20 mb-4">
+                    <div className="flex flex-col items-center relative z-10">
+                      <div className="relative w-24 h-24 mb-6">
                         <motion.div 
-                          animate={{ rotate: 360, borderColor: ["#22d3ee", "#a855f7", "#ec4899", "#22d3ee"] }}
-                          transition={{ 
-                            rotate: { duration: 3, repeat: Infinity, ease: "linear" },
-                            borderColor: { duration: 3, repeat: Infinity }
-                          }}
-                          className="w-full h-full border-4 rounded-full"
-                          style={{ borderRadius: "50%" }}
+                          animate={{ rotate: 360 }}
+                          transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
+                          className="w-full h-full border-4 border-cyan-400/30 rounded-full"
                         />
                         <motion.div 
-                          animate={{ 
-                            rotate: -360,
-                            borderTopColor: ["#ec4899", "#a855f7", "#22d3ee", "#ec4899"]
-                          }}
-                          transition={{ 
-                            rotate: { duration: 1.5, repeat: Infinity, ease: "linear" },
-                            borderTopColor: { duration: 3, repeat: Infinity }
-                          }}
-                          className="absolute top-1 left-1 right-1 bottom-1 border-t-4 rounded-full"
-                          style={{ borderRadius: "50%" }}
+                          animate={{ rotate: -360 }}
+                          transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+                          className="absolute top-2 left-2 right-2 bottom-2 border-t-4 border-purple-400 rounded-full"
+                        />
+                        <motion.div 
+                          animate={{ rotate: 360 }}
+                          transition={{ duration: 1.5, repeat: Infinity, ease: "linear" }}
+                          className="absolute top-4 left-4 right-4 bottom-4 border-r-4 border-pink-400 rounded-full"
                         />
                       </div>
                       <motion.h3 
@@ -529,70 +620,78 @@ const FoodCard = ({ food, index, onClick, isSelected }) => {
                           color: ["#fff", "#22d3ee", "#a855f7", "#ec4899", "#fff"]
                         }}
                         transition={{ duration: 4, repeat: Infinity }}
-                        className="text-xl font-semibold mb-2"
+                        className="text-2xl font-bold mb-3"
                       >
-                        Analyzing Your Food
+                        🧠 AI Processing Your Food
                       </motion.h3>
-                      <p className="text-white/70 text-center">Our AI is identifying ingredients and calculating nutritional values</p>
+                      <p className="text-gray-400 text-center font-medium">Advanced neural networks are analyzing nutritional composition</p>
                     </div>
                   </motion.div>
                 )}
               </AnimatePresence>
 
-              {/* Results Section */}
+              {/* Enhanced Results Section */}
               <AnimatePresence>
                 {result && !loading && (
                   <motion.div 
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -20 }}
-                    transition={{ type: "spring", stiffness: 100 }}
+                    initial={{ opacity: 0, y: 30, scale: 0.95 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, y: -30, scale: 0.95 }}
+                    transition={{ type: "spring", stiffness: 100, damping: 20 }}
                   >
                     {result.error ? (
-                      <div className="bg-white/10 backdrop-blur-lg rounded-2xl shadow-xl p-8 text-center border border-white/20">
-                        <div className="w-16 h-16 bg-pink-900/30 backdrop-blur-sm rounded-full flex items-center justify-center mx-auto mb-4 border border-pink-500/30">
-                          <X size={32} className="text-pink-400" />
+                      <div className="bg-gray-900/80 backdrop-blur-2xl rounded-3xl shadow-2xl p-10 text-center border border-red-500/30 relative overflow-hidden">
+                        <div className="absolute inset-0 bg-gradient-to-br from-red-500/5 to-pink-500/5" />
+                        <div className="relative z-10">
+                          <div className="w-20 h-20 bg-red-900/40 backdrop-blur-sm rounded-2xl flex items-center justify-center mx-auto mb-6 border border-red-500/30">
+                            <X size={40} className="text-red-400" />
+                          </div>
+                          <h3 className="text-2xl font-bold text-white mb-4">Analysis Failed</h3>
+                          <p className="text-gray-300 mb-8">{result.error}</p>
+                          <motion.button
+                            whileHover={{ scale: 1.05 }}
+                            whileTap={{ scale: 0.95 }}
+                            onClick={clearImage}
+                            className="bg-gray-800/60 hover:bg-gray-700/60 text-white px-8 py-3 rounded-2xl font-bold transition-all duration-300 border border-gray-600/50"
+                          >
+                            Try Again
+                          </motion.button>
                         </div>
-                        <h3 className="text-xl font-semibold text-white mb-2">Analysis Failed</h3>
-                        <p className="text-white/70">{result.error}</p>
-                        <button
-                          onClick={clearImage}
-                          className="mt-6 bg-white/10 hover:bg-white/20 text-white px-6 py-2 rounded-lg font-medium transition-colors border border-white/20"
-                        >
-                          Try Again
-                        </button>
                       </div>
                     ) : (
                       <div>
-                        <div className="bg-gradient-to-r from-cyan-500/30 via-purple-500/30 to-pink-500/30 backdrop-blur-md p-6 text-white border-b border-white/20 rounded-t-2xl">
-                        <motion.h2 
-                initial={{ opacity: 0, y: -10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.2 }}
-                className="text-2xl font-bold flex items-center"
-              >
-                <Sparkles className="mr-2 text-cyan-300" size={20} />
-                Analysis Results
-              </motion.h2>                      
-            </div>
+                        <div className="bg-gradient-to-r from-cyan-500/20 via-purple-500/20 to-pink-500/20 backdrop-blur-2xl p-8 text-white border-b border-gray-700/50 rounded-t-3xl relative overflow-hidden">
+                          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent animate-pulse" />
+                          <motion.h2 
+                            initial={{ opacity: 0, y: -10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: 0.2 }}
+                            className="text-3xl font-bold flex items-center relative z-10"
+                          >
+                            <div className="w-10 h-10 bg-gradient-to-br from-cyan-400 to-purple-400 rounded-xl flex items-center justify-center mr-4">
+                              <Sparkles className="text-white" size={24} />
+                            </div>
+                            🎯 Analysis Complete
+                          </motion.h2>                      
+                        </div>
                         
-            {renderFoodList()}
+                        {renderFoodList()}
                         
-            <motion.button
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-              onClick={clearImage}
-              className="mt-6 bg-white/10 hover:bg-white/20 text-white px-6 py-3 rounded-lg font-medium transition-colors flex items-center justify-center border border-white/20 w-full"
-            >
-              <Camera className="mr-2" size={18} /> 
-              Scan Another Image
-            </motion.button>
-          </div>
-        )}
-      </motion.div>
-    )}
-  </AnimatePresence>
-</motion.div>
+                        <motion.button
+                          whileHover={{ scale: 1.02, boxShadow: "0 0 25px rgba(34, 211, 238, 0.3)" }}
+                          whileTap={{ scale: 0.98 }}
+                          onClick={clearImage}
+                          className="mt-8 bg-gray-800/60 hover:bg-gray-700/60 text-white px-8 py-4 rounded-2xl font-bold transition-all duration-300 flex items-center justify-center border border-gray-600/50 w-full backdrop-blur-sm shadow-xl"
+                        >
+                          <Camera className="mr-3" size={20} /> 
+                          🔄 Scan Another Image
+                        </motion.button>
+                      </div>
+                    )}
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </motion.div>
           </div>
         </motion.div>
       </div>

@@ -20,10 +20,9 @@
 - **ODM (Object Document Mapper):** Mongoose
 
 ## 🔹 APIs & External Services
-- **Exercise API:** ExerciseDB (RapidAPI)
-- **Food & Nutrition API:** Nutritionix API
-- **AI-based Food Recognition:** TensorFlow.js
-- **Video Meeting:** WebRTC (for real-time video communication)
+
+- **AI-based Food Recognition:** Gemini API service
+
 
 ## 🔹 Dev Tools & Hosting
 - **Version Control:** Git & GitHub
